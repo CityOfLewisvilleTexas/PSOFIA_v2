@@ -1,0 +1,65 @@
+[v-cloak] { display: none }
+
+#extended-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 350px;
+    z-index: 0;
+}
+#extended-toolbar .progress {
+    position: absolute;
+    bottom: -16px;
+}
+#extended-toolbar .edge {
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    height: 4px;
+}
+
+#hello {
+    position: relative;
+    z-index: 1;
+    font-size: 30px;
+    color: white;
+    font-family: "Product Sans";
+    letter-spacing: 1px;
+}
+
+#form-holder {
+    margin-top: 20px;
+    margin-bottom: 0 !important;
+    padding-bottom: 20px !important;
+    overflow: hidden;
+}
+
+#form {
+    padding: 24px 0;
+    transition: transform 0.5s ease-in-out;
+}
+
+.card-title {
+    border-bottom: 4px solid #e91e63;
+    margin-bottom: 20px;
+}
+
+#form .divider {
+    height: 2px !important;
+    width: 100% !important;
+    margin: 24px 0 !important;
+}
+
+#bottom20 {
+    margin-bottom: 20px;
+}
+
+#rnumber, #rnumber + label {
+    color: #9e9e9e !important;
+}
+
+.blurred {
+    pointer-events: none;
+    transform: translate3d(0, 120%, 0)
+}
