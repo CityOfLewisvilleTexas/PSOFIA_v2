@@ -41,14 +41,6 @@ var app = new Vue({
 				FormFields: [], // needs updateDB
 				FormVSOptions: [], // needs updateDB
 			},
-/* PULLING OUT OF data OBJ */
-			formDefault: {
-				FormData: {},
-				FormSection: {}, // needs updateDB
-				FormSubSection: {}, // needs updateDB
-				FormField: {}, // needs updateDB
-				FormVSOption: {} // needs updateDB
-			},
 		},
 		formDefaults: {
 			FormData: {},
@@ -224,25 +216,24 @@ var app = new Vue({
 				});
 
 
-				app.data.formDefault.FormData = dataX.FormData.find(function(f){
+				app.formDefaults.FormData = dataX.FormData.find(function(f){
 					return f.updateDB === true;
 				});
-				
 				// Hard coded default section is Main (last)
-				app.data.formDefault.FormSection = dataX.FormSections.find(function(f){
+				app.formDefaults.FormSection = dataX.FormSections.find(function(f){
 					return f.updateDB === true && f.SectionID == 2;
 				});
 				// Hard coded separate section for Main (first)
-				app.data.formDefault.FirstFormSection = dataX.FormSections.find(function(f){
+				app.formDefaults.FirstFormSection = dataX.FormSections.find(function(f){
 					return f.updateDB === true && f.SectionID == 1;
 				});
-				app.data.formDefault.FormSubSection = dataX.FormSubSections.find(function(f){
+				app.formDefaults.FormSubSection = dataX.FormSubSections.find(function(f){
 					return f.updateDB === true;
 				});
-				app.data.formDefault.FormField = dataX.FormFields.find(function(f){
+				app.formDefaults.FormField = dataX.FormFields.find(function(f){
 					return f.updateDB === true;
 				});
-				app.data.formDefault.FormVSOption = dataX.FormVSOptions.find(function(f){
+				app.formDefaults.FormVSOption = dataX.FormVSOptions.find(function(f){
 					return f.updateDB === true;
 				});
 
@@ -251,11 +242,11 @@ var app = new Vue({
     // FIX CODE: FIX FOR FIRST TO BY GENERAL MAIN SECTION, LAST TO BE GENERAL LAST?
 				// if new form, insert default row for form data
 					if(!(app.formID) || app.data.FormData.length == 0){
-						app.data.FormData = app.data.formDefault.FormData;
+						app.data.FormData = app.formDefaults.FormData;
 					}
 					// If no sections, automatically push the default Main (first) section
 					if(app.data.FormSections.length === 0){
-						var adding = app.data.formDefault.FirstFormSection;
+						var adding = app.formDefaults.FirstFormSection;
 						adding.FormSectionID = app.maxSectionID + 1;
 						app.data.FormSections.push(adding);
 					}
@@ -366,7 +357,7 @@ var app = new Vue({
 /* CODE INCOMPLETE */
         addNewField: function(payload){
 			console.log("add new field");
-            var adding = app.data.formDefault.Field;
+            var adding = app.formDefaults.Field;
             adding.FormFieldID = app.maxFieldID + 1;
             adding.FieldOrder = payload.index + 1;
 
@@ -384,7 +375,7 @@ var app = new Vue({
 /* CODE INCOMPLETE */
         addNewSection: function(payload){
 			console.log("add new section");
-            var adding = app.data.formDefault.FormSection;
+            var adding = app.formDefaults.FormSection;
             adding.SectionID = app.maxSectionID + 1;
             adding.SectionOrder = payload.index + 1;
 
@@ -402,7 +393,7 @@ var app = new Vue({
 /* CODE INCOMPLETE */
         addNewSubSection: function(payload){
 			console.log("add new sub section");
-            var adding = app.data.formDefault.FormSubSection;
+            var adding = app.formDefaults.FormSubSection;
             adding.SubSectionID = app.maxSubSectionID + 1;
             adding.SubSectionOrder = payload.index + 1;
 
