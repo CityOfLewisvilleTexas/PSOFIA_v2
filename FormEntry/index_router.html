@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>PSOFIAv2 Form Entry</title>
+    <!-- force no compatibility mode in IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- google fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Product+Sans:400,400i,700,700i" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- styles -->
+    <!--<link rel="stylesheet" type="text/css" href="style.css" media="screen" />-->
+    <!--<link rel="stylesheet" title="styles" href="materialize/css/materialize.min.css">-->
+    <link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">
+
+    <!-- Vue -->
+    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <!-- Vue Router -->
+    <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+    <!-- Vuetify -->
+    <script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+    <!-- axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- JQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<!-- moment -->
+	<script type="text/javascript" src="../moment/moment.js"></script>
+    <!-- my script - moment date formatting -->
+    <script type="text/javascript" src="../scripts/dateFormatting.js"></script>
+    <!-- my script - data functions / get val from sql value + formatting -->
+    <script type="text/javascript" src="../scripts/dataFunctions.js"></script>
+    <!-- my script - Store -->
+    <script type="text/javascript" src="../scripts/store.js"></script>
+    <!-- polyfills - Object.assign -->
+    <script type="text/javascript" src="../scripts/polyfills.js"></script>
+
+    <!-- materialize -->
+    <!--<script src="materialize/js/materialize.js"></script>-->
+    <!-- city oauth -->
+    <script src="http://apps.cityoflewisville.com/COLSecurity/col_security.js"></script>
+	
+    <!-- mobile friendly -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="../components/builder-date-picker-v.js"></script>
+</head>
+
+<body>
+    <div id="app" v-cloak>
+    <v-app>
+        <!-- colored toolbar -->
+        <v-toolbar app dense flat dark color="indigo">
+            <v-toolbar-side-icon></v-toolbar-side-icon>
+            <v-toolbar-title>PSOFIAv2 Form Entry</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-toolbar-items>
+                <v-btn flat>{{userEmail}}</v-btn>
+            </v-toolbar-items>
+            <v-btn icon>
+                <v-icon>refresh</v-icon>
+            </v-btn>
+            <!--<v-btn icon @click="goBack">
+                <v-icon>arrow_back</v-icon>
+            </v-btn>-->
+        </v-toolbar>
+        <v-content>
+            <v-container fluid>
+                <router-view></router-view>
+            </v-container>
+        </v-content>
+    </v-app>
+    </div>
+
+    <!-- source code -->
+    <script type="text/javascript" src="app_router.js"></script>
+</body>
+</html>

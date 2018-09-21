@@ -10,8 +10,9 @@
     <link href="https://fonts.googleapis.com/css?family=Product+Sans:400,400i,700,700i" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- styles -->
-    <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
-    <link rel="stylesheet" title="styles" href="materialize/css/materialize.min.css">
+    <!--<link rel="stylesheet" type="text/css" href="style.css" media="screen" />-->
+    <!--<link rel="stylesheet" title="styles" href="materialize/css/materialize.min.css">-->
+    <link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">
     <!-- Vue -->
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <!-- Vuetify -->
@@ -23,94 +24,94 @@
 	<!-- moment -->
 	<script type="text/javascript" src="../moment/moment.js"></script>
     <!-- materialize -->
-    <script src="materialize/js/materialize.js"></script>
+    <!--<script src="materialize/js/materialize.js"></script>-->
     <!-- city oauth -->
     <script src="http://apps.cityoflewisville.com/COLSecurity/col_security.js"></script>
 	
     <!-- mobile friendly -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	
+    <script src="../components/builder-form-data-v.js"></script>
     <script src="../components/builder-form-section-v.js"></script>
+    <script src="../components/builder-text-v.js"></script>
+    <script src="../components/builder-number-v.js"></script>
+    <script src="../components/builder-checkbox-v.js"></script>
+    <script src="../components/builder-select-v.js"></script>
+    <script src="../components/builder-autocomplete-v.js"></script>
+    <script src="../components/builder-combobox-v.js"></script>
 
-	<script src="../components/builder-form-data.js"></script>
 	<script src="../components/builder-form-sub-section.js"></script>
 	<script src="../components/builder-form-field.js"></script>
 	<script src="../components/builder-form-field-min.js"></script>
-	<script src="../components/builder-input.js"></script>
-	<script src="../components/builder-select.js"></script>
-	<script src="../components/builder-number.js"></script>
-	<script src="../components/builder-input-size.js"></script>
-	<script src="../components/builder-select-size.js"></script>
+
 </head>
 
-<body>
-    <div id="app" class="grey lighten-3" v-cloak>
+<body class="grey lighten-3">
+    <div id="app" v-cloak>
+    <v-app>
         <!-- colored toolbar -->
-        <div id="extended-toolbar" class="deep-purple accent-2 z-depth-1">
-            <div class="progress pink lighten-4" v-if="isSubmitting">
-                <div class="indeterminate pink"></div>
-            </div>
-            <div class="progress pink lighten-4" v-else-if="isLoading">
-                <div class="indeterminate pink"></div>
-            </div>
-            <div class="edge pink" v-else></div>
-        </div>
+        <v-toolbar dense flat dark color="indigo">
+            <v-toolbar-title>PSOFIAv2 Form Builder</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-toolbar-title>{{userEmail}}</v-toolbar-title>
+        </v-toolbar>
         <!-- form -->
-        <div id="form-holder" class="row grey lighten-3">
-            <!-- welcome message -->
-            <div id="hello" class="row center-align">{{ hello }}</div>
-            <div class="col s12 m10 offset-m1">
-                <div id="form" class="row card z-depth-3" v-if="!isLoading">
-                    <div class="col s10 offset-s1 card-title">
-                        <h4 class="bold">PSOFIAv2 Form Builder</h4>
-                    </div>
+        <v-container grid-list-md>
+            <v-layout row wrap>
+            <!--<div id="form-holder" class="row grey lighten-3">-->
+                <!-- welcome message -->
+                    <!--<div id="hello" class="row center-align">{{ hello }}</div>-->
+                    <!--div class="col s12 m10 offset-m1">-->
+                    <!--<v-form id="form" v-if="!isLoading">-->
 
-					<builder-form-data
-						v-if="(typeof data.FormData!='undefined')"
-						:form-data="data.FormData"
-						:departments="data.Departments">
-					</builder-form-data>
-					
-                    <div class="col s12 divider grey lighten-2"></div>
+    			<builder-form-data-v
+    				v-if="(typeof data.FormData !='undefined')"
+    				:form-data="data.FormData"
+    				:departments="data.Departments">
+    			</builder-form-data-v>
+                            <!--<div class="col s12 divider grey lighten-2"></div>-->
 
-					
-					<!--MAKE A COMPONENT FOR EACH SECTION / SUBSECTION-->
-					
-                    <!-- General Section -->
-                    <!--GENERAL SECTION-->
-					
-					<builder-form-section-v v-for="s in data.FormSections"
-						:key="s.FormSectionID"
-						:section="s"
-						:sub-sections="getSubSections(s)"
-						:fields="getSectionFields(s)"
-						:field-editing="fieldEditing"
-                        :formDefaults="formDefaults"
-						:all-sections="data.Sections"
-						:all-sub-sections="data.SubSections"
-						:all-field-types="data.FieldTypes"
-						:all-validation-sets="data.ValidationSets"
-					></builder-form-section-v>
+        					
+        					<!--MAKE A COMPONENT FOR EACH SECTION / SUBSECTION-->
+        					
+                            <!-- General Section -->
+                            <!--GENERAL SECTION-->
+        					
+    			<builder-form-section-v v-for="s in data.FormSections"
+    				:key="s.FormSectionID"
+    				:section="s"
+    				:sub-sections="getSubSections(s)"
+    				:fields="getSectionFields(s)"
+    				:field-editing="fieldEditing"
+                    :form-defaults="formDefaults"
+    				:all-sections="data.Sections"
+    				:all-sub-sections="data.SubSections"
+    				:all-field-types="data.FieldTypes"
+    				:all-validation-sets="data.ValidationSets"
+    			></builder-form-section-v>
 
-                    <!-- section -->
-					
-					<div class="col s12 l10 offset-l1">
-						<a class="waves-effect waves-light btn">Add New Section</a>
-					</div>
-					
-                    <div class="col s12 divider grey lighten-2"></div>
+                        <!-- section -->
+    					
+    			<v-flex xs12>
+                    <v-card dark color="primary">
+                        <v-card-text class="px-0">
+                            <a class="waves-effect waves-light btn">Add New Section</a>
+                        </v-card-text>
+                    </v-card>
+    			</v-flex>
 
-                    <!-- section -->
-                </div>
-            </div>
-        </div>
+                            <!-- section -->
+                    <!--</v-form>-->
+                    <!--</div>-->
 
-        <div class="fixed-action-btn" v-on:click="submitForm()">
-            <a class="btn-floating btn-large red" v-if="!isSubmitting">
-              <i class="large material-icons">done</i>
-            </a>
-        </div>
-
+                <!--<div class="fixed-action-btn" v-on:click="submitForm()">
+                    <a class="btn-floating btn-large red" v-if="!isSubmitting">
+                      <i class="large material-icons">done</i>
+                    </a>
+                </div>-->
+            </v-layout>
+        </v-container>
+    </v-app>
     </div>
 
     <!-- source code -->

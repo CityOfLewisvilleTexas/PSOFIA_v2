@@ -57,6 +57,9 @@ var app = new Vue({
     },
 	
 	computed:{
+		userEmail: function(){
+			return localStorage.colEmail;
+		},
 		orderedSections: function(){
 			return this.data.FormSections.sort(function(a, b){
 				return a.SectionOrder - b.SectionOrder;
@@ -124,6 +127,8 @@ var app = new Vue({
     },
 	
 	created: function(){
+		eventHub.$on('update-form-data', this.updateFormData);
+		eventHub.$on('update-section-data', this.updateSectionData);
 		eventHub.$on('update-input', this.updateField);
 		
 		eventHub.$on('editing-field', this.setEditField);
@@ -252,7 +257,31 @@ var app = new Vue({
 					}
 					
 					Vue.nextTick(function(){
-						app.isLoading = false;
+						/*var sObj;
+						var sTitle;
+						app.data.FormSections.forEach(function(section){
+							sObj = app.data.Sections.find(function(s){
+								return s.SectionID == section.SectionID;
+							})
+							if(sObj){
+								sTitle = sObj.SectionTitle;
+							}
+							Vue.set(section, 'SectionTitle', sTitle);
+						});
+						if(app.data.FormSubSections.length > 0){
+							app.data.FormSubSections.forEach(function(section){
+								sObj = app.data.Sections.find(function(s){
+									return s.SectionID == section.SectionID;
+								})
+								if(sObj){
+									sTitle = sObj.SectionTitle;
+								}
+								Vue.set(section, 'SectionTitle', sTitle);
+							});
+						}*/
+						//Vue.nextTick(function(){
+							app.isLoading = false;
+						//}
 					});
 				});
 				
@@ -285,13 +314,97 @@ var app = new Vue({
 
         updateFormData: function(payload){
             // only update data from the main app
-            console.log('updateMainData');
-            // check if change
+            console.log('updating form data');
 // ADD CODE: KEEP SEPARATE OBJs FOR ORIGINAL DATA, COMPARE TO ORIGINAL FOR UPDATE DB
 // covers if they change in app, then change back to what was in db
-            if (this.data.FormData[payload.prop] != payload.val){
-                this.data.FormData[payload.prop] = payload.val;
-                this.data.FormData.updateDB = true;
+			// if value sent
+			if(payload.val){
+				// check if change
+				if (this.data.FormData[payload.valPropname] != payload.val){
+					this.data.FormData[payload.valPropname] = payload.val;
+					this.data.FormData.updateDB = payload.needsUpdate;
+					// only null text prop if already set (no need for text if val)
+					if (this.data.FormData.hasOwnProperty(payload.textPropname)){
+						this.data.FormData[payload.textPropname] = null;
+					}
+				}
+			}
+			// if only text was sent
+			else if(payload.text){
+				if(!(this.data.FormData.hasOwnProperty(payload.textPropname))){
+					Vue.set(this.data.FormData, payload.textPropname, payload.text);
+					this.data.FormData[payload.valPropname] = null;
+					this.data.FormData.updateDB = true;
+				}
+				else if (this.data.FormData.hasOwnProperty(payload.textPropname) && this.data.FormData[payload.textPropname] != payload.text){
+					this.data.FormData[payload.textPropname] = payload.text;
+					this.data.FormData[payload.valPropname] = null;
+					this.data.FormData.updateDB = true;
+				}
+			}
+			else{
+				this.data.FormData[payload.valPropname] = null;
+				this.data.FormData[payload.textPropname] = null;
+				this.data.FormData.updateDB = payload.needsUpdate;
+			}
+        },
+        updateSectionData: function(payload){
+			// only update data from the main app
+            console.log('updating section data');
+
+// ADD CODE: KEEP SEPARATE OBJs FOR ORIGINAL DATA, COMPARE TO ORIGINAL FOR UPDATE DB
+// covers if they change in app, then change back to what was in db
+        	var s = this.data.FormSections.find(function(section){
+                return section.FormSectionID == payload.formSectionID;
+            })
+            if (s){
+            	// if val sent
+            	if(payload.val){
+            		// check if change
+                	if(s[payload.valPropname] != payload.val){
+                		s[payload.valPropname] = payload.val;
+                		s.updateDB = payload.needsUpdate;
+                		// only update text prop if already set
+                		if (s.hasOwnProperty(payload.textPropname)){
+                			s[payload.textPropname] = null;
+                		}
+                	}
+                }
+                // else if only text was sent
+                else if (payload.text){
+                	if(!(s.hasOwnProperty(payload.textPropname))){
+						Vue.set(s, payload.textPropname, payload.text);
+						s[payload.valPropname] = null;
+						s.updateDB = true;
+					}
+					else if(s.hasOwnProperty(payload.textPropname) && s[payload.textPropname] != payload.text){
+						s[payload.textPropname] = payload.text;
+						s[payload.valPropname] = null;
+						s.updateDB = true;
+					}
+				}
+				else{
+					console.log('null field');
+					s[payload.valPropname] = null;
+                	Vue.set(s, payload.textPropname, null);
+                	s.updateDB = payload.needsUpdate;
+				}
+                // check if the current record matches
+                if(app.data.Record && app.data.Record.length > 0){
+                	console.log("check Record?");
+                    /*if(app.data.Record[0][payload.htmlID] !== payload.ID){
+                        f.updateDB = true;
+                    }
+                    else{
+                        f.updateDB = false;
+                    }*/
+                }
+                else{
+                    //s.updateDB = true;
+                }
+            }
+            else{
+                console.log('ERROR');
             }
         },
         updateFormSection: function(payload){
@@ -300,7 +413,7 @@ var app = new Vue({
             // check if change
 // ADD CODE: KEEP SEPARATE OBJs FOR ORIGINAL DATA, COMPARE TO ORIGINAL FOR UPDATE DB
 // covers if they change in app, then change back to what was in db
-        var s = this.data.FormSections.find(function(section){
+			var s = this.data.FormSections.find(function(section){
                 return section.SectionID == payload.sectionID;
             })
             if (f){
@@ -447,10 +560,10 @@ var app = new Vue({
             }*/
 
             // re-render all the input fields (pushes the labels out of the way)
-            Vue.nextTick(function() {
+            /*Vue.nextTick(function() {
                 Materialize.updateTextFields()
                 //$('select').material_select()
-            })
+            })*/
         },
 
         // fill date in manually
@@ -509,15 +622,14 @@ var app = new Vue({
         initSelects: function() {
 
             // setup
-            $('select').material_select()
-
+            /*
             // set the vue values
             Vue.nextTick(function() {
                 $('select').change(function() {
                     var id = $(this).attr('id')
                     app.formValues[id] = $(this).val()
                 })
-            })
+            })*/
         },
 		
 /*

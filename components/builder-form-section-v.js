@@ -1,17 +1,12 @@
-/*
-	Modified 7/12 PM
-	- checked through multiple times
-	- not tested 
-	- corrected on 0 components
-	- might have fully corrected on index
-*/
-
 Vue.component('builder-form-section-v', {
-	// declare the props
 	props: {
 		section:{
 			type: [Object],
 			required: true
+		},
+		origSection:{
+			type: [Object],
+			required: false
 		},
 		// subsections for current section
 		subSections:{
@@ -23,96 +18,168 @@ Vue.component('builder-form-section-v', {
 			type: [Object, Array],
 			required: false
 		},
-		fieldEditing:{
-			type: [String],
-			required: false
-		},
-		formDefaults:{
-			type: [Object, Array],
-			required: true
-		},
-		// all sections passed for autocomplete
-		allSections:{
-			type: [Object, Array],
-			required: true
-		},
-		// all subsections passed for autocomplete
-		allSubSections:{
+		origSections:{
 			type: [Object, Array],
 			required: false
 		},
-		// all field types passed for select
-		allFieldTypes:{
+		origSubSections:{
 			type: [Object, Array],
-			required: true
+			required: false
 		},
-		// all validation sets passed for select
-		allValidationSets:{
+		origFields:{
 			type: [Object, Array],
 			required: false
 		}
 	},
-	template: '\
-		<span>\
-			<div class="col s12 l10 offset-l1">\
-				<h5>SECTION</h5>\
-			</div>\
-			<div class="col s12 l10 offset-l1">\
-<!-- CHANGE TO AUTOCOMPLETE --> \
-				<h3>{{sectionTitle}}</h3>\
-			</div>\
-			\
-<!-- ADD CHECKBOX TO HIDE TITLE --> \
-\
-<!-- Cant do this, need js methods for both dialog and data-table to be in same component --> \
-<!--			<builder-form-field-v-dialog >\
-			</builder-form-field-v-dialog>\
-			\
-			<builder-form-field-v-data-table \
-				:fields="orderedFields">\
-			</builder-form-field-v-data-table>\
--->			\
-\
-			\
-			<div class="col s12 l10 offset-l1">\
-				<a class="waves-effect waves-light btn" \
-					v-on:click="addSubSection($event.target)"\
-				>Add New Sub Section</a>\
-			</div>\
-			<builder-form-sub-section-v v-for="sub in subSections" \
-				:key="sub.SubSectionID" \
-				:sub-section="sub" \
-				:fields="getSubSectionFields(sub)"  \
-				:all-sub-sections="allSubSections"  \
-				:all-field-types="allFieldTypes" \
-				:all-validation-sets="allValidationSets" \
-			></builder-form-sub-section-v>\
-			<div class="col s12 divider grey lighten-2"></div>\
-		</span>\
-	',
+	template: `
+		<v-flex xs12>
+			<v-card class="card--flex-toolbar">
+				<v-toolbar card>
+					<v-toolbar-title class="body-2 grey--text">Section {{section.SectionOrder}}</v-toolbar-title>
+					<v-spacer></v-spacer>
+					<v-btn icon @click="moveSectionUp">
+						<v-icon>arrow_upward</v-icon>
+					</v-btn>
+					<v-btn icon @click="moveSectionDown">
+						<v-icon>arrow_downward</v-icon>
+					</v-btn>
+				</v-toolbar>
+				
+				<v-card-text>
+					<v-layout row wrap>
+						<v-flex xs12>
+							<builder-combobox-v
+								:field="section"
+								:orig-field="origSection"
+								:autocomplete-options="allSections"
+								val-propname="SectionID"
+								text-propname="SectionTitle"
+								id-text="SecTitle" 
+								:id-num="section.FormSectionID"
+								:concat-id="true"
+								label-text="Section Title"
+								data-portion="section"
+							></builder-combobox-v>
+						</v-flex>
+						<v-flex xs12>
+							<builder-checkbox-v
+								:field="section"
+								:orig-field="origSection"
+								val-propname="HideSectionTitle"
+								id-text="SecTitleCk"
+								:id-num="section.FormSectionID"
+								:concat-id="true"
+								label-text="Hide Title In Form"
+								data-portion="section"
+							></builder-checkbox-v>
+							<v-divider></v-divider>
+						</v-flex>
+						
+						<v-flex xs12>
+							<v-toolbar flat color="white">
+								<v-toolbar-title class="body-2 grey--text">Fields</v-toolbar-title>
+								<v-spacer></v-spacer>
+								<v-btn flat small disabled @click="editNewField">
+									<v-icon small>add_box</v-icon>Add Field
+								</v-btn>
+							</v-toolbar>
+							<builder-fields-table-v
+								:section="section"
+								:orig-section="origSection"
+								:sub-sections="subSections"
+								:fields="fields"
+								:orig-sections="origSections"
+								:orig-sub-sections="origSubSections"
+								:orig-fields="origFields"
+							></builder-fields-table-v>
+						</v-flex>
+
+						<builder-field-dialog-v
+							:section-id="sectionID"
+							:fields="fields"
+						></builder-field-dialog-v>
+						
+						<v-divider></v-divider>
+						
+						<!--<builder-form-sub-section-v v-for="sub in subSections" 
+							:key="sub.SubSectionID" 
+							:sub-section="sub" 
+							:fields="getSubSectionFields(sub)"  
+							:all-sub-sections="allSubSections"  
+							:all-field-types="allFieldTypes" 
+							:all-validation-sets="allValidationSets" 
+						></builder-form-sub-section-v>-->
+					</v-layout>
+				</v-card-text>
+				<v-card-actions>
+					<v-spacer></v-spacer>
+					<v-btn color="blue darken-1" flat @click="addSubSection">Add New Sub Section</v-btn>
+				</v-card-actions>
+				
+			</v-card>
+		</v-flex>
+	`,
 	data: function(){
 		return{
 			//list vars
+			sharedState: store.state,
 			/* copied from Vuetify for data-table w/ CRUD */
-			dialog: false,
-			headers: [
-				{// I don't think I'll use headers?
-				}
-			],
-			editedIndex: -1,
-			editedField: {},
-			defaultField:{}
+			showDialog: false,
+			defaultField: {},
+			//editingFieldID: -1,
+			//editingField: {},
 		}
 	},
 	created: function(){
-		this.intialize(); // idk why not done in ready?
+		 this.initialize();
+	},
+	mounted:function(){
+		//this.initialize(); // idk why not done in ready?
 	},
 	watch: {
-      dialog: function(val) {
+      /*showDialog: function(val) {
         val || this.close()
-      }
+      }*/
     },
 	computed: {
+		allSections:function(){
+			return this.sharedState.sections;
+		},
+		allSubSections:function(){
+			return this.sharedState.subSections;
+		},
+		allFieldTypes:function(){
+			return this.sharedState.fieldTypes;
+		},
+		allValidationSets:function(){
+			return this.sharedState.validationSets;
+		},
+		/*minFieldID:function(){
+			//return store.getMinFieldID();
+		},*/
+		/*maxFieldOrder:function(){
+			//return store.getMaxOrderInSection(self.sectionID);
+		},*/
+
+		sectionID:function(){
+			return this.section.SectionID;
+		},
+
+		sectionTitle: function(){
+			var vm = this;
+			var s = this.allSections.find(function(sF){
+				// DON'T COMPARE TO FormSectionID
+				return vm.section.SectionID == sF.SectionID;
+			});
+			if(s){
+				return s.SectionTitle;
+			}
+/* AUTOCOMPLETE - where is update/set? */
+			else{
+				return "ERROR?";
+			}
+		},
+
 		sectionFields:function(){
 			return this.fields.filter(function(f){
 				// IS NOT SubSectionID
@@ -132,31 +199,47 @@ Vue.component('builder-form-section-v', {
 				return a.SubSectionOrder - b.SubSectionOrder;
 			});
 		},
-		sectionTitle: function(){
-			var vm = this;
-			var s = this.allSections.find(function(sF){
-				// DON'T COMPARE TO FormSectionID
-				return vm.section.SectionID == sF.SectionID;
-			});
-			if(s){
-				return s.SectionTitle;
-			}
-/* AUTOCOMPLETE - where is update/set? */
-			else{
-				return "ERROR?";
-			}
-		},
-		/* Copied from Vuetify for data-table w/ CRUD */
-		formTitle () {
-			return this.editedIndex === -1 ? 'New Item' : 'Edit Item'
-		}
 	},
 	methods: {
 		initialize: function(){
-			/* copied from Vuetify data-table w/ CRUD - needed to do here b/c defaults sent from server */
-			this.editedField = this.formDefaults.FormField;
-			this.defaultField = this.formDefaults.FormField;
+			var self = this;
+
+			//this.defaultField = this.getDefaultField();
+			//this.editingField = clone(self.defaultField);
+
+			this.listenOnHub();
 		},
+		listenOnHub: function(){
+			var self = this;
+			//eventHub.$on('open-edit-dialog-full', self.openDialog);
+		},
+		minFieldID:function(){
+			return store.getMinFieldID();
+		},
+		newFieldID:function(){
+			if(this.minFieldID() >= 0){
+				return -1;
+			}
+			else{
+				return this.minFieldID() - 1;
+			}
+		},
+		maxFieldOrder:function(){
+			var self = this;
+			return store.getMaxOrderInSection(self.sectionID);
+		},
+		findInSetByID: function(set, id, idPropname){
+            return set.find(function(s){
+                return s[idPropname] == id;
+            });
+        },
+
+        getDefaultField:function(){
+        	var self = this;
+        	return store.getDefaultFieldForSection(self.sectionID);
+        },
+        
+
 		getSubSectionFields: function(sub){
 			return this.fields.filter(function(f){
 				// IS NOT SubSectionID?
@@ -164,58 +247,49 @@ Vue.component('builder-form-section-v', {
 			});
 		},
 
-		/* copied from Vuetify data-table w/ CRUD - not sure if I can pass item the same way they did, so I pass index */
-		editField: function(field) {
-			this.editedIndex = this.fields.indexOf(field);
-			this.editedField = Object.assign({}, field);
-			this.dialog = true;
-		},
-		editField2: function(fieldIndex) {
-			this.editedIndex = fieldIndex;
-			this.editedField = Object.assign({}, this.fields[fieldIndex]);
-			this.dialog = true;
-		},
-		deleteItem: function(field) {
-			const index = this.fields.indexOf(field);
-			confirm('Are you sure you want to delete this field?') && this.fields.splice(index, 1);
-		},
-		deleteItem2: function(fieldIndex) {
-			const index = fieldIndex;
-			confirm('Are you sure you want to delete this field?') && this.fields.splice(index, 1);
-		},
-
-		close: function() {
-			this.dialog = false
-			/* REWRITE */
-			setTimeout(() => {
-				this.editedField = Object.assign({}, this.defaultItem)
-				this.editedIndex = -1
-			}, 300)
-		},
-
-		save: function() {
-			if (this.editedIndex > -1) {
-				//Object.assign(this.fields[this.editedIndex], this.editedField)
-				this.editField(this.editedIndex, this.editedField)
+		getFieldType:function(field){
+			var ft = this.allFieldTypes.find(function(f){
+				return f.FieldTypeID == field.FieldTypeID;
+			})
+			if(ft){
+				return ft.FieldType;
 			}
-			else {
-				//this.fields.push(this.editedField)
-				this.addField(this.editedField)
+			else{
+				return '';
 			}
-			this.close()
-		}
+		},
 
+		editNewField: function(fieldID){
+        	var self = this;
+			eventHub.$emit('open-edit-dialog-full', {sectionID: self.sectionID, fieldID: field.FormFieldID});
+		},
+
+		deleteFieldByID: function(fieldID) {
+			//confirm('Are you sure you want to delete this field?') //&& this.fields.splice(index, 1);
+
+			eventHub.$emit('delete-field', {fieldID: fieldID});
+			//this.editingFieldID = null;
+        	//this.editingField = clone(self.defaultField);
+		},
 
 /* ADD NEW FIELD - currently passing section ID only */
-		editField:function(index, val){
-			//eventHub.$emit('add-new-field', {sectionID: this.section.sectionID, SubSectionID: null});
+		updateField: function(fieldID, updatedField){
+			eventHub.$emit('update-field', {fieldID: fieldID, updatedField: updatedField});
 		},
-		addField:function(val){
-			//eventHub.$emit('add-new-field', {sectionID: this.section.sectionID, SubSectionID: null});
+		addField: function(fieldID, field){
+			eventHub.$emit('add-new-field', {fieldID: fieldID, field: field});
 		},
+
 /* ADD NEW SUBSECTION - currently passing section ID only */
-		addSubSection:function(val){
+		addSubSection: function(val){
 			//eventHub.$emit('add-new-sub-section', {sectionID: this.section.sectionID});
+		},
+		moveSectionUp(){
+			var self = this;
+			eventHub.$emit('move-section', {formSectionID: self.section.FormSectionID, type: 'up'});
+		},
+		moveSectionDown(){
+			eventHub.$emit('move-section', {formSectionID: self.section.FormSectionID, type: 'down'});
 		}
 	}
 })
