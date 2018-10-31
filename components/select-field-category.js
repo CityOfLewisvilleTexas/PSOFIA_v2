@@ -1,4 +1,4 @@
-Vue.component('select-field', {
+Vue.component('select-field-category', {
 	// declare the props
 	props: {
 		field:{
@@ -22,11 +22,13 @@ Vue.component('select-field', {
 				v-bind:value="field.fieldVal"
 				>
 				<option value="">Choose your option</option>
-				<option v-for="o in sortedOptions"
-					:key="o.VSOptionID"
-					v-bind:value="o.EntryValue" 
-					v-bind:selected="o.EntryValue==field.fieldVal"
-				>{{o.EntryName}}</option>
+				<optgroup v-for="cat in vseCategories" :label="cat.VSECategory">
+					<option v-for="o in getSortedOptionsInCat(cat)"
+						:key="o.VSOptionID"
+						v-bind:value="o.EntryValue" 
+						v-bind:selected="o.EntryValue==field.fieldVal"
+					>{{o.EntryName}}</option>
+				</optgroup>
 			</select>
 			<label v-if="field.FieldName">{{field.FieldName}}</label>
 		</div>
@@ -54,9 +56,28 @@ Vue.component('select-field', {
 			return this.vsOptions.sort(function(a, b){
 				return a.OptionOrder - b.OptionOrder;
 			});
+		},
+		vseCategories: function(){
+			var allCategories = [];
+			this.sortedOptions.forEach(function(option){
+				var arrLen = allCategories.length;
+				if(arrLen == 0 || (allCategories[(arrLen - 1)].VSECategoryID != option.VSECategoryID)){
+					var newCategory = {
+						VSECategoryID: option.VSECategoryID,
+						VSECategory: option.VSECategory
+					}
+					allCategories.push(newCategory);
+				}
+			});
+			return allCategories;
 		}
 	},
 	methods:{
+		getSortedOptionsInCat: function(category){
+			return this.sortedOptions.filter(function(option){
+				return option.VSECategoryID == category.VSECategoryID;
+			});
+		},
 		updateValue:function(value){
 			// Emit the value through the hub (to top level)
 			//eventHub.$emit('update-input', {fieldID: this.field.FormFieldID, val: Number(formattedValue)});

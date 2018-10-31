@@ -2,6 +2,7 @@
 
 const eventHub = new Vue();
 
+
 var Home = {
     template: `
         <v-layout row wrap>
@@ -9,20 +10,52 @@ var Home = {
                 <v-btn to="/build/">Create New</v-btn>
             </v-flex>
             <v-flex xs12>
+                <v-card>
+                    <v-card-title primary-title>All Forms</v-card-title>
+                    <v-card-actions>
+                        <v-btn to="/build/">
+                            <v-icon dark>add_box</v-icon>
+                            New Form
+                        </v-btn>
+                        <v-btn @click="showSearch = true">
+                            <!--<v-icon dark>mdi-add_box</v-icon>-->
+                            Search Forms
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-flex>
+            <v-flex xs12>
                 <v-data-table
                     :headers="formHeaders"
-                    :items="forms"
+                    :items="orderedForms"
+                    item-key="FormID.val"
+                    :total-items="totalForms"
                     class="elevation-1"
                     hide-actions
                 >
                     <template slot="items" slot-scope="props">
-                        <td v-for="col in dataColumns" :key="col.valPropname"
-                            :class="getDisplayClass(col)"
-                        >
-                            {{displayField(props.item, col)}}
-                        </td>
-                        <td><v-tooltip bottom><v-btn flat small slot="activator">Link</v-btn><span>{{props.item.ViewFormAddress}}</span></v-tooltip></td>
-                        <td><v-btn icon small :to="getRouteLink(props.item.FormID)">
+                        <td class="text-xs-right">{{props.item.FormID.displayVal}}</td>
+                        <td class="text-xs-left"><v-tooltip bottom>
+                            <span slot="activator">{{props.item.FormName}}</span>
+                            <span>SQL Table Name: {{props.item.TableName}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-tooltip bottom>
+                            <span slot="activator">{{props.item.Department}}</span>
+                            <span>Department ID: {{props.item.DepartmentID}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-tooltip bottom>
+                            <span slot="activator">{{props.item.CreateDate.displayVal}}</span>
+                            <span>{{props.item.CreateUser}} - {{getFullDateDisplay(props.item.CreateDate)}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-tooltip bottom>
+                            <span slot="activator">{{props.item.LastEditDate.displayVal}}</span>
+                            <span>{{props.item.LastEditUser}} - {{getFullDateDisplay(props.item.LastEditDate)}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-tooltip v-if="props.item.ViewFormAddress" bottom>
+                            <v-btn flat small slot="activator">Link</v-btn>
+                            <span>{{props.item.ViewFormAddress}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-btn icon small :to="getRouteLink(props.item.FormID.val)">
                             <v-icon>pageview</v-icon>
                         </v-btn></td>
                     </template>
@@ -33,54 +66,77 @@ var Home = {
     data: function(){
         return{
             //list vars
-            sharedState: store.state,
+            /* copied from Vuetify for data-table w/ CRUD */
             isLoading: true,
+            sharedState: store.state.database,
             formHeaders: [
-                {text: 'ID', value:'FormID', sortable: true, searchable: true, align: 'center'},
-                {text: 'Name', value:'FormName', sortable: true, searchable: true, align: 'center'},
-                {text: 'Table', value:'TableName', sortable: true, searchable: true, align: 'center'},
-                {text: 'Department', value:'Department', sortable: true, searchable: true, align: 'center'},
-                {text: 'Create Date', value:'CreateDate', sortable: true, searchable: true, align: 'center'},
-                {text: 'Create User', value:'CreateUser', sortable: true, searchable: true, align: 'center'},
-                {text: 'Last Edit Date', value:'LastEditDate', sortable: true, searchable: true, align: 'center'},
-                {text: 'Last Edit User', value:'LastEditUser', sortable: true, searchable: true, align: 'center'},
-                {text: 'View', value:'ViewFormAddress', align: 'center'},
-                {text: 'View Records', align: 'center'}
+                {text: 'ID', value:'FormID.val', sortable: false, searchable: true, align: 'center'},
+                {text: 'Name', value:'FormName', sortable: false, searchable: true, align: 'center'},
+                {text: 'Department', value:'Department', sortable: false, searchable: true, align: 'center'},
+                {text: 'Created', value:'CreateDate.val', sortable: false, searchable: true, align: 'center'},
+                {text: 'Last Edited', value:'LastEditDate.val', sortable: false, searchable: true, align: 'center'},
+                {text: 'View', value:'ViewFormAddress', sortable: false, align: 'center'},
+                {text: 'View Records', sortable: false, align: 'center'}
             ],
-            dataColumns: [],
-            forms: []
+            dataColumns: []
+        }
+    },
+    computed: {
+        orderedForms: function(){
+            return store.getForms_Ordered('database');
+        },
+        totalForms: function(){
+            return store.countForms('database');
+        },
+        headerCols: function(){
+            return store.getColumns_Headers('allForms');  
         }
     },
     created: function(){
         this.initialize();
     },
+    /*beforeRouteUpdate (to, from, next) {
+        // react to route changes...
+        // don't forget to call next()
+        console.log(to + ', ' + from);
+        next();
+    },*/
     watch: {
         // call again the method if the route changes
-        /*'$route': function(to, from){
-            this.routeChanged();
-        }*/
+        '$route': {
+            handler(val){
+                this.routeChanged();
+            },
+            deep: true
+        },
+        router: function(newVal, oldVal){
+            console.log("router changed");
+        }
     },
     methods: {
         initialize: function(){
-            console.log("init Home");
             var self = this;
+            this.isLoading = true;
+
+            if(this.debug) console.log("init Home");
 
             // get all forms
+            this.getForms();
+        },
+        getForms: function(){
             this.isLoading = true;
-            this.fillDataColumns();
             $.post('https://query.cityoflewisville.com/v2/',{
-                webservice : 'PSOFIAv2/Get All Forms'
+                webservice : 'PSOFIAv2/Get All Forms2'
             },
-            function(dataX){
-                self.forms = dataX.Forms;
-                store.setAllForms(dataX.Forms);
+            function(data){
+                store.loadColumns(data.Columns, ['allforms']);
+                store.loadAllForms(data.Forms);
                 self.isLoading = false;
             })
-            .fail(function(dataX){
-                console.log('Webservice Fail: Get All Forms');
+            .fail(function(data){
+                console.log('Webservice Fail: Get All Forms2');
                 self.isLoading = false;
             });
-
         },
         getRouteLink: function(_formID){
             return '/build/' + _formID.toString() + '/';
@@ -88,63 +144,12 @@ var Home = {
         routeChanged: function(){
             console.log("Home - Route Changed");
         },
-        fillDataColumns: function(){
-            this.dataColumns = [{field: {FieldTypeID: null, FieldType: 'INT'},
-                    valPropname: this.formHeaders[0].value,
-                    header: this.formHeaders[0],
-                    sortBy: 'ascending',
-                    defaultSortOrder: 0},
-                {field: {FieldTypeID: null, FieldType: 'TEXT'},
-                    valPropname: this.formHeaders[1].value,
-                    header: this.formHeaders[1],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'TEXT'},
-                    valPropname: this.formHeaders[2].value,
-                    header: this.formHeaders[2],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'TEXT'},
-                    valPropname: this.formHeaders[3].value,
-                    header: this.formHeaders[3],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'DATETIME'},
-                    valPropname: this.formHeaders[4].value,
-                    header: this.formHeaders[4],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'TEXT'},
-                    valPropname: this.formHeaders[5].value,
-                    header: this.formHeaders[5],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'DATETIME'},
-                    valPropname: this.formHeaders[6].value,
-                    header: this.formHeaders[6],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'TEXT'},
-                    valPropname: this.formHeaders[7].value,
-                    header: this.formHeaders[7],
-                    sortBy: null,
-                    defaultSortOrder: null}];
-        },
-        getDisplayClass: function(col){
-            if( col.field.FieldTypeID == 3 || col.field.FieldType == 'INT'){ // number
-                return 'text-xs-right';
+        getFullDateDisplay: function(dateObj){
+            if(dateObj.val){
+                return getFullDateStr(dateObj.val, 'default', 'default', true, 'default', 'prepend');
             }
-            else if (col.field.FieldTypeID == 4 || col.field.FieldTypeID == 5 || col.field.FieldType == 'TEXT'){
-                return 'text-xs-left';
-            }
-            else{   // date: 1, time: 2, checkbox: 6, select: 7
-                return 'text-xs-center';
-            }
-        },
-        displayField: function(record, col){
-            var self = this;
-            return getDisplayVal(record, col.valPropname, col.field);
-        },
+            else return dateObj.displayVal;
+        }
     }
 }
 
@@ -155,8 +160,8 @@ var Build = {
                 <v-layout row wrap>
                     <v-flex xs12 sm6>
                         <h4 class="display-2">{{title}}</h4><v-progress-circular indeterminate v-if="isLoading" color="primary"></v-progress-circular>
-                        <span class="subheading">Created: {{fData.FormData.CreateDate}}</span>
-                        <span class="subheading">Last Edited: {{fData.FormData.LastEditDate}}</span>
+                        <span class="subheading">Created: {{createDate}}</span>
+                        <span class="subheading">Last Edited: {{editDate}}</span>
                     </v-flex>
                     <v-flex xs12 sm6 class="text-lg-right">
                         <span class="subheading">{{status}}</span>
@@ -166,35 +171,17 @@ var Build = {
             </v-flex>
 
             <v-flex xs12>
-                <builder-form-data-v
-                    :form-data="fData.FormData"
-                    :orig-form-data="db.FormData"
-                    :departments="fData.Departments"
-                >
+                <builder-form-data-v>
                 </builder-form-data-v>
             </v-flex>
                         
             <!--MAKE A COMPONENT FOR EACH SECTION / SUBSECTION-->
                         
             <v-flex xs12>
-                <builder-form-section-v v-for="s in sharedState.form.sections"
+                <builder-form-section-v v-for="s in orderedSections"
                     :key="s.FormSectionID"
                     :form-section-id="s.FormSectionID"
                 ></builder-form-section-v>
-                <!--<builder-form-section-v v-for="s in fData.FormSections"
-                    :key="s.FormSectionID"
-                    :section="s"
-                    :orig-section="getOriginalSectionByID(s.FormSectionID)"
-                    :sub-sections="getSubSections(s)"
-                    :fields="getSectionFields(s)"
-                    :orig-sub-sections="db.FormSubSections"
-                    :orig-fields="db.FormFields"
-                    :form-defaults="formDefaults"
-                    :all-sections="fData.Sections"
-                    :all-sub-sections="fData.SubSections"
-                    :all-field-types="fData.FieldTypes"
-                    :all-validation-sets="fData.ValidationSets"
-                ></builder-form-section-v>-->
             </v-flex>
                     
             <v-flex xs12>
@@ -215,49 +202,10 @@ var Build = {
     `,
     data: function(){
         return{
-            //list vars
-            // adding store
             sharedState: store.state,
             isLoading: true,
             formID: '',
-            fData: {
-                Forms: [],  // autocomplete for FormName
-                Departments: [], // autocomplete for Department, modal, needs updateDB?
-                Sections: [], // autocomplete for SectionTitle, needs updateDB
-                SubSections: [],
-                FieldTypes: [],
-                ValidationSets: [],
-                VSEntries: [],
-    /* LOOP TO ADD ORIGINAL VALUE FOR COMPARISON??? - No, that will be in component */
-    /* remember to add reset orig val for dialog and such, not re-created, but have to reset orig val?*/
-                FormData: {}, //  needs updateDB
-                FormSections: [], // needs updateDB
-                FormSubSections: [], // needs updateDB
-                FormFields: [], // needs updateDB
-                FormVSOptions: [], // needs updateDB
-    /* ADDING FOR COMPARISON??? */
-            },
-            db: {
-                FormData: {}, //  needs updateDB
-                FormSections: [], // needs updateDB
-                FormSubSections: [], // needs updateDB
-                FormFields: [], // needs updateDB
-                FormVSOptions: [], // needs updateDB
-            },
-            formDefaults: {
-                FormData: {},
-                FormSection: {}, // needs updateDB
-                FirstFormSection: {}, // needs updateDB
-                LastFormSection: {}, // needs updateDB
-                FormSubSection: {}, // needs updateDB
-                FormField: {}, // needs updateDB
-                FormVSOption: {} // needs updateDB
-            },
-            newFormSectionID: 0,
-            newSectionID: 0,
-            newFormSubSectionID: 0,
-            newSubSectionID: 0,
-            newFieldID: 0
+            debug: true,
         }
     },
     created: function(){
@@ -277,69 +225,38 @@ var Build = {
             }
             return 'Create New Form'
         },
+        unsavedChanges: function(){
+            if(!(this.formID) || store.formHasChange()){
+                return true;
+            }
+            return false;
+        },
         status: function(){
             if(this.unsavedChanges){
                 return 'Unsaved Changes';
             }
             return 'Saved to DB';
         },
-        unsavedChanges: function(){
-            if(!(this.formID) || this.fData.FormData.updateDB || this.sectionChanged || this.subSectionChanged || this.fieldChanged || this.vsOptionChanged){
-                return true;
-            }
-            return false;
+        formData: function(){
+            sharedState.form.formData;
         },
-        sectionChanged: function(){
-            var f = this.fData.FormSections.find(function(s){
-                return s.updateDB == true;
-            });
-            if(f){
-                return true;
-            }
-            return false;
+        createDate: function(){
+            sharedState.form.formData.CreateDate.displayVal;
         },
-        subSectionChanged: function(){
-            var f = this.fData.FormSubSections.find(function(ss){
-                return ss.updateDB == true;
-            });
-            if(f){
-                return true;
-            }
-            return false;
+        editDate: function(){
+            sharedState.form.formData.LastEditDate.displayVal;
         },
-        fieldChanged: function(){
-            var f = this.fData.FormFields.find(function(ff){
-                return ff.updateDB == true;
-            });
-            if(f){
-                return true;
-            }
-            return false;
-        },
-        vsOptionChanged: function(){
-            var f = this.fData.FormVSOptions.find(function(o){
-                return o.updateDB == true;
-            });
-            if(f){
-                return true;
-            }
-            return false;
-        },
-        sectionCount: function(){
-            var c = 0;
-            if (this.fData.FormSections){
-                c = this.fData.FormSections.length;
-            }
-            return c;
+        orderedSections: function(){
+            store.getFormSections_Ordered();
         }
 
     },
     methods: {
         initialize: function(){
-            console.log("init Build");
             var self = this;
+            this.isLoading = true;
 
-            this.listenOnHub();
+            if(this.debug) console.log("init Build");
 
             this.formID = this.$route.params.formid
 
@@ -348,31 +265,21 @@ var Build = {
             });
         },
         routeChanged: function(){
-            console.log("Build - Route Changed")
-        },
-        listenOnHub: function(){
-            var self = this;
-            eventHub.$on('update-form-data', self.updateFormData);
-            eventHub.$on('update-section-data', self.updateSectionData);
-            eventHub.$on('update-field', self.updateFormField);
-            
-            //eventHub.$on('editing-field', self.setEditField);
-
-            eventHub.$on('add-new-field', self.addNewField);
-            //eventHub.$on('add-new-section', self.addNewSection);
-            eventHub.$on('add-new-sub-section', self.addNewSubSection);
+            if(this.debug) console.log("Build - Route Changed")
         },
         getFormBuilder: function(){
-            console.log("getFormBuilder");
             var self = this;
+            this.isLoading = true;
 
-            self.isLoading = true;
+            if(this.debug) console.log("getFormBuilder");
             
             $.post('https://query.cityoflewisville.com/v2/',{
-                webservice : 'PSOFIAv2/Get Form Builder',
+                webservice : 'PSOFIAv2/Get Form Builder2',
                 formID: self.formID
             },
             function(dataX){
+                //NEEDS TO BE FIXED
+                store.loadColumns(data.Columns, ['formData', 'sections', 'subSections', 'fields','valSets', 'vsOptions','record']);
                 /*  var app = this;
                     var dataX = JSON.parse('{"Forms":[{"FormID":2,"FormName":"City of Lewisville Plant Report","Department":1},{"FormID":1,"FormName":"Operations Report","Department":1}],\
                         "Departments":[{"DepartmentID":1,"Department":"Wastewater Treatment"}],\
@@ -389,14 +296,6 @@ var Build = {
                     }');
                 */
                 //console.log(JSON.stringify(data));
-                
-                /* FULL POSIBILITIES */
-                self.fData.Forms = dataX.Forms;
-                self.fData.Departments = dataX.Departments;
-                self.fData.Sections = dataX.Sections;
-                self.fData.SubSections = dataX.SubSections;
-                self.fData.FieldTypes = dataX.FieldTypes;
-                self.fData.ValidationSets = dataX.ValidationSets;
 
                 /* adding store */
                 store.setAllForms(dataX.Forms);
@@ -411,80 +310,14 @@ var Build = {
                 /* FORM SETUP - New or FormID */
                 // Set DB for comparison
                 // Defaults are mostly for the bits, getting rid of isDefault and only using updateDB (if it's default it will have to be updated)
-                f = dataX.FormData.find(function(f){
-                    return f.updateDB === false;
-                });
-                    self.fData.FormData = f;
-                    self.db.FormData = clone(f);
-                    store.loadFormData(f);
-
-                f = dataX.FormSections.filter(function(f){
-                    return f.updateDB === false;
-                });
-                    self.fData.FormSections = f;
-                    self.db.FormSections = clone(f);
-                    store.loadFormSections(f);
-
-                f = dataX.FormSubSections.filter(function(f){
-                    return f.updateDB === false;
-                });
-                    self.fData.FormSubSections = f;
-                    self.db.FormSubSections = clone(f);
-                    store.loadFormSubSections(f);
-
-                f = dataX.FormFields.filter(function(f){
-                    return f.updateDB === false;
-                });
-                    self.fData.FormFields = f;
-                    self.db.FormFields = clone(f);
-                    store.loadFormFields(f);
-
-                f = dataX.FormVSOptions.filter(function(f){
-                    return f.updateDB === false;
-                });
-                    self.fData.FormVSOptions = f;
-                    self.db.FormVSOptions = clone(f);
-                    store.loadFormVSOptions(f);
-
-
-                f = dataX.FormData.find(function(f){
-                    return f.updateDB === true;
-                });
-                self.formDefaults.FormData = f;
-                store.setDefaultFormData(f);
-
-                f = dataX.FormSections.find(function(f){
-                    return f.updateDB === true && !(f.SectionID);
-                });
-                self.formDefaults.FormSection = f;
-                store.setDefaultSection(f);
-                // Hard coded last section is Main (last)
-                f = dataX.FormSections.find(function(f){
-                    return f.updateDB === true && f.SectionID == 2;
-                });
-                self.formDefaults.LastFormSection = f;
-                store.setDefaultLastSection(f);
-                // Hard coded separate section for Main (first)
-                f = dataX.FormSections.find(function(f){
-                    return f.updateDB === true && f.SectionID == 1;
-                });
-                self.formDefaults.FirstFormSection = f;
-                store.setDefaultFirstSection(f);
-                f = dataX.FormSubSections.find(function(f){
-                    return f.updateDB === true;
-                });
-                self.formDefaults.FormSubSection = f;
-                store.setDefaultSubSection(f);
-                f = dataX.FormFields.find(function(f){
-                    return f.updateDB === true;
-                });
-                self.formDefaults.FormField = f;
-                store.setDefaultField(f);
-                f = dataX.FormVSOptions.find(function(f){
-                    return f.updateDB === true;
-                });
-                self.formDefaults.FormVSOption = f;
-                store.setDefaultVSOption(f);
+                store.loadFormData(dataX.FormData);
+                store.loadFormSections(dataX.FormSections);
+                store.loadFormSubSections(dataX.FormSubSections);
+                store.loadFormFields(dataX.FormFields);
+                store.loadFormVSOptions(dataX.FormValSets);
+                store.loadFormVSOptions(dataX.FormVSOptions);
+                store.loadFormVSEntries(dataX.FormVSEntries);
+                store.loadFormVSECategories(dataX.FormVSECategories);
 
                 var adding;
     // FIX CODE: FIX FOR FIRST TO BY GENERAL MAIN SECTION, LAST TO BE GENERAL LAST?
@@ -492,19 +325,11 @@ var Build = {
                 if(!(self.formID)){
                     console.log("adding data");
                     store.addDefaultFormData();
-
-                    adding = clone(self.formDefaults.FormData);
-                    adding.FormID = -1;
-                    self.fData.FormData = adding;
                 }
                 // If no sections, automatically push the default Main (first) section
                 if(self.fData.FormSections.length === 0){
                     console.log("adding section");
                     store.addFirstSection();
-                    self.newFormSectionID--;
-                    adding = clone(self.formDefaults.FirstFormSection);
-                    adding.FormSectionID = self.newFormSectionID;
-                    self.fData.FormSections.push(adding);
                 }
 
                 Vue.nextTick(function(){
@@ -516,19 +341,6 @@ var Build = {
                 self.isLoading = false;
             });
 
-        },
-
-        getSectionFields: function(section){
-            return this.fData.FormFields.filter(function(f){
-                // IS NOT SectionID
-                return f.FormSectionID == section.FormSectionID;
-            });
-        },
-        getSubSections: function(section){
-            return this.fData.FormSubSections.filter(function(ss){
-                // IS NOT FormSectionID
-                return ss.SectionID == section.SectionID;
-            });
         },
 
         /* get by ids */

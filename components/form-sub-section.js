@@ -1,13 +1,9 @@
-Vue.component('form-section', {
+Vue.component('form-sub-section', {
 	// declare the props
 	props: {
-		section:{
+		subSection:{
 			type: [Object],
 			required: true
-		},
-		subSections:{
-			type: [Object, Array],
-			required: false
 		},
 		fields:{
 			type: [Object, Array],
@@ -24,13 +20,11 @@ Vue.component('form-section', {
 	},
 	template: `
 		<span>
-			<div v-if="!(section.HideSectionTitle)" class="col s12 l10 offset-l1">
-				<h3>{{section.SectionTitle}}</h3>
-				<p v-if="section.SectionDesc" v-html="section.SectionDesc" style="white-space: pre-wrap;"></p>
+			<div v-if="!(subSection.HideSectionTitle)" class="col s12 l10 offset-l1">
+				<h4>{{subSection.SubSectionTitle}}</h4>
+				<h6 v-if="subSection.SubSectionDesc">{{subSection.SubSectionDesc}}</h6>
 			</div>
 			<form-field v-for="f in getOrderedFields" :key="f.FormFieldID" :field="f" :v-set="getFieldVSet(f)" :vs-options="getFieldVSOptions(f)"></form-field>
-			<form-sub-section v-for="sub in subSections" :key="sub.SubSectionID" :sub-section="sub" :fields="getSubSectionFields(sub)" :vs-sets="vsSets" :vs-options="vsOptions"></form-sub-section>
-			<div class="col s12 divider grey lighten-2"></div>
 		</span>
 	`,
 	
@@ -42,21 +36,12 @@ Vue.component('form-section', {
 	},
 	computed: {
 		getOrderedFields:function (){
-			return this.fields.filter(function(f){
-				return !(f.FormSubSectionID);
-			}).sort(function(a, b){
+			return this.fields.sort(function(a, b){
 				return a.FieldOrder - b.FieldOrder;
 			});
 		}
 	},
 	methods: {
-		getSubSectionFields: function(sub){
-			return this.fields.filter(function(f){
-				return f.FormSubSectionID == sub.FormSubSectionID;
-			}).sort(function(a, b){
-				return a.FieldOrder - b.FieldOrder;
-			});
-		},
 		getFieldVSet: function(field){
 			if(field.FieldType == 'SELECT'){
 				return this.vsSets.find(function(s){

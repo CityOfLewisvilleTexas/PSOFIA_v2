@@ -6,20 +6,48 @@ var Home = {
     template: `
         <v-layout row wrap>
             <v-flex xs12>
+                <v-card>
+                    <v-card-title primary-title>All Forms</v-card-title>
+                    <v-card-actions>
+                        <v-btn @click="showSearch = true">
+                            <!--<v-icon dark>mdi-add_box</v-icon>-->
+                            Search Forms
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-flex>
+            <v-flex xs12>
                 <v-data-table
                     :headers="formHeaders"
-                    :items="forms"
+                    :items="orderedForms"
+                    item-key="FormID.val"
+                    :total-items="totalForms"
                     class="elevation-1"
                     hide-actions
                 >
                     <template slot="items" slot-scope="props">
-                        <td v-for="col in dataColumns" :key="col.valPropname"
-                            :class="getDisplayClass(col)"
-                        >
-                            {{displayField(props.item, col)}}
-                        </td>
-                        <td><v-tooltip bottom><v-btn flat small slot="activator">Link</v-btn><span>{{props.item.ViewFormAddress}}</span></v-tooltip></td>
-                        <td><v-btn icon small :to="getRouteLink(props.item.FormID)">
+                        <td class="text-xs-right">{{props.item.FormID.displayVal}}</td>
+                        <td class="text-xs-left"><v-tooltip bottom>
+                            <span slot="activator">{{props.item.FormName}}</span>
+                            <span>SQL Table Name: {{props.item.TableName}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-tooltip bottom>
+                            <span slot="activator">{{props.item.Department}}</span>
+                            <span>Department ID: {{props.item.DepartmentID}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-tooltip bottom>
+                            <span slot="activator">{{props.item.CreateDate.displayVal}}</span>
+                            <span>{{props.item.CreateUser}} - {{getFullDateDisplay(props.item.CreateDate)}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-tooltip bottom>
+                            <span slot="activator">{{props.item.LastEditDate.displayVal}}</span>
+                            <span>{{props.item.LastEditUser}} - {{getFullDateDisplay(props.item.LastEditDate)}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-tooltip v-if="props.item.ViewFormAddress" bottom>
+                            <v-btn flat small slot="activator">Link</v-btn>
+                            <span>{{props.item.ViewFormAddress}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-btn icon small :to="getRouteLink(props.item.FormID.val)">
                             <v-icon>pageview</v-icon>
                         </v-btn></td>
                     </template>
@@ -29,27 +57,31 @@ var Home = {
     `,
     data: function(){
         return{
-            //list vars
-            /* copied from Vuetify for data-table w/ CRUD */
             isLoading: true,
+            sharedState: store.state.database,
+            storeLoading: store.state.database.isLoading,
             formHeaders: [
-                {text: 'ID', value:'FormID', sortable: true, searchable: true, align: 'center'},
-                {text: 'Name', value:'FormName', sortable: true, searchable: true, align: 'center'},
-                {text: 'Table', value:'TableName', sortable: true, searchable: true, align: 'center'},
-                {text: 'Department', value:'Department', sortable: true, searchable: true, align: 'center'},
-                {text: 'Create Date', value:'CreateDate', sortable: true, searchable: true, align: 'center'},
-                {text: 'Create User', value:'CreateUser', sortable: true, searchable: true, align: 'center'},
-                {text: 'Last Edit Date', value:'LastEditDate', sortable: true, searchable: true, align: 'center'},
-                {text: 'Last Edit User', value:'LastEditUser', sortable: true, searchable: true, align: 'center'},
-                {text: 'View', value:'ViewFormAddress', align: 'center'},
-                {text: 'View Records', align: 'center'}
+                {text: 'ID', value:'FormID.val', sortable: false, searchable: true, align: 'center'},
+                {text: 'Name', value:'FormName', sortable: false, searchable: true, align: 'center'},
+                {text: 'Department', value:'Department', sortable: false, searchable: true, align: 'center'},
+                {text: 'Created', value:'CreateDate.val', sortable: false, searchable: true, align: 'center'},
+                {text: 'Last Edited', value:'LastEditDate.val', sortable: false, searchable: true, align: 'center'},
+                {text: 'View', value:'ViewFormAddress', sortable: false, align: 'center'},
+                {text: 'View Records', sortable: false, align: 'center'}
             ],
-            dataColumns: [],
-            forms: []
+            debug: true,
         }
     },
     computed: {
-        
+        orderedForms: function(){
+            return store.getForms_Ordered('database');
+        },
+        totalForms: function(){
+            return store.countForms('database');
+        },
+        headerCols: function(){
+            return store.getColumns_Headers('allForms');  
+        }
     },
     created: function(){
         this.initialize();
@@ -61,7 +93,7 @@ var Home = {
         next();
     },*/
     watch: {
-        // call again the method if the route changes
+        // call method if the route changes
         '$route': {
             handler(val){
                 this.routeChanged();
@@ -69,95 +101,47 @@ var Home = {
             deep: true
         },
         router: function(newVal, oldVal){
-            console.log("router changed");
+            if(this.debug) console.log("router changed");
         }
     },
     methods: {
         initialize: function(){
-            console.log("init Home");
             var self = this;
+            this.isLoading = true;
+
+            if(this.debug) console.log("init Home");
 
             // get all forms
-            this.isLoading = true;
-            this.fillDataColumns();
-            $.post('https://query.cityoflewisville.com/v2/',{
-                webservice : 'PSOFIAv2/Get All Forms'
-            },
-            function(dataX){
-                self.forms = dataX.Forms;
-                store.setAllForms(dataX.Forms);
-                self.isLoading = false;
-            })
-            .fail(function(dataX){
-                console.log('Webservice Fail: Get All Forms');
-                self.isLoading = false;
-            });
+            this.getForms();
 
         },
+        getForms: function(){
+            this.isLoading = true;
+            $.post('https://query.cityoflewisville.com/v2/',{
+                webservice : 'PSOFIAv2/Get All Forms2'
+            },
+            function(data){
+                store.loadColumns(data.Columns, ['allforms']);
+                store.loadAllForms(data.Forms);
+                self.isLoading = false;
+            })
+            .fail(function(data){
+                console.log('Webservice Fail: Get All Forms2');
+                self.isLoading = false;
+            });
+        },
         getRouteLink: function(_formID){
-            //console.log('Home getRouteLink formID = ' + _formID);
             return '/form/' + _formID.toString();
         },
         routeChanged: function(){
-            console.log("Home - Route Changed")
+            if(this.debug) console.log("Home - Route Changed")
         },
-        fillDataColumns: function(){
-            this.dataColumns = [{field: {FieldTypeID: null, FieldType: 'INT'},
-                    valPropname: this.formHeaders[0].value,
-                    header: this.formHeaders[0],
-                    sortBy: 'ascending',
-                    defaultSortOrder: 0},
-                {field: {FieldTypeID: null, FieldType: 'TEXT'},
-                    valPropname: this.formHeaders[1].value,
-                    header: this.formHeaders[1],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'TEXT'},
-                    valPropname: this.formHeaders[2].value,
-                    header: this.formHeaders[2],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'TEXT'},
-                    valPropname: this.formHeaders[3].value,
-                    header: this.formHeaders[3],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'DATETIME'},
-                    valPropname: this.formHeaders[4].value,
-                    header: this.formHeaders[4],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'TEXT'},
-                    valPropname: this.formHeaders[5].value,
-                    header: this.formHeaders[5],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'DATETIME'},
-                    valPropname: this.formHeaders[6].value,
-                    header: this.formHeaders[6],
-                    sortBy: null,
-                    defaultSortOrder: null},
-                {field: {FieldTypeID: null, FieldType: 'TEXT'},
-                    valPropname: this.formHeaders[7].value,
-                    header: this.formHeaders[7],
-                    sortBy: null,
-                    defaultSortOrder: null}];
-        },
-        getDisplayClass: function(col){
-            if( col.field.FieldTypeID == 3 || col.field.FieldType == 'INT'){ // number
-                return 'text-xs-right';
+        getFullDateDisplay: function(dateObj){
+            if(dateObj.val){
+                return getFullDateStr(dateObj.val, 'default', 'default', true, 'default', 'prepend');
             }
-            else if (col.field.FieldTypeID == 4 || col.field.FieldTypeID == 5 || col.field.FieldType == 'TEXT'){
-                return 'text-xs-left';
-            }
-            else{   // date: 1, time: 2, checkbox: 6, select: 7
-                return 'text-xs-center';
-            }
-        },
-        displayField: function(record, col){
-            var self = this;
-            return getDisplayVal(record, col.valPropname, col.field);
-        },
+            else return dateObj.displayVal;
+        }
     }
 }
 
@@ -172,7 +156,7 @@ var FormRecords = {
             </v-flex>
             <v-flex xs12>
                 <v-card>
-                    <v-card-title primary-title>{{data.FormData.FormName}}</v-card-title>
+                    <v-card-title primary-title>{{sharedState.form.formData.FormName}}</v-card-title>
                     <v-card-actions>
                         <v-btn :to="nextRouteLink">
                             <v-icon dark>add_box</v-icon>
@@ -228,47 +212,65 @@ var FormRecords = {
             </v-flex>
             <v-flex xs12>
                 <v-data-table
-                    :headers="recordHeaders"
-                    :items="sortedRecords"
-                    item-key="RecordNumber"
+                    :items="records_defaultOrdered"
+                    item-key="RecordNumber.val"
                     :total-items="totalRecords"
                     :loading="isLoading"
                     class="elevation-1"
                     hide-actions
                 >
                     <template slot="headers" slot-scope="props">
-                        <th v-for="col in recordColumns" :key="col.header.text"
-                            :class="['column', col.header.sortable ? 'sortable' : '', col.sortBy == 'descending' ? 'desc' : 'asc', col.sortBy == 'ascending' ? 'active' : '',  col.sortBy == 'descending' ? 'active' : '']"
-                        >
-                            <v-btn icon small flat v-if="col.header.sortable" @click="changeSort(col)" size="14px">
+                        <th>Edit</th>
+                        <th v-if="primaryDateField">
+                            <v-btn icon small flat @click="changeSort(primaryDateField)" size="14px">
                                 <v-icon size="14px">arrow_upward</v-icon>
                             </v-btn>
-                            {{col.header.text}}
-                            <v-btn icon small flat v-if="col.header.searchable" size="14px"><v-icon size="14px">search</v-icon></v-btn>
+                            {{primaryDateField.FieldName}}
+                            <v-btn icon small flat size="14px"><v-icon size="14px">search</v-icon></v-btn>
                         </th>
-                        <th>Edit Record</th>
+                        <th v-for="field in visibleFields" :key="field.FormFieldID">
+                            <v-btn icon small flat @click="changeSort(field)" size="14px">
+                                <v-icon size="14px">arrow_upward</v-icon>
+                            </v-btn>
+                            {{field.FieldName}}
+                            <v-btn icon small flat size="14px"><v-icon size="14px">search</v-icon></v-btn>
+                        </th>
+                        <th>Submitted</th>
+                        <th>Last Edited</th>
                     </template>
                     <template slot="items" slot-scope="props">
-                        <td v-for="col in recordColumns" :key="col.valPropname"
-                            :class="getDisplayClass(col)"
-                        >
-                            {{getDisplayData(props.item, col)}}
-                        </td>
-                        <td>
-                            <v-btn icon :to="getRouteLink(props.item.RecordNumber)">
+                        <td class="text-xs-center">
+                            <v-btn icon :to="getRouteLink(props.item.RecordNumber.val)">
                                 <v-icon dark>edit</v-icon>
                             </v-btn>
                         </td>
+                        <td v-if="primaryDateField" class="text-xs-center">
+                            {{getColDisplayVal(props.item, primaryDateField)}}
+                        </td>
+                        <td v-for="field in visibleFields" :key="getColKey(props.item, field)"
+                            :class="getDisplayClass(field)"
+                        >
+                            {{getColDisplayVal(props.item, field)}}
+                        </td>
+                        <td class="text-xs-center"><v-tooltip bottom>
+                            <span slot="activator">{{props.item.OriginalSubmitDate.displayVal}}</span>
+                            <span>{{props.item.OriginalSubmitUser}} - {{getFullDateDisplay(props.item.OriginalSubmitDate)}}</span>
+                        </v-tooltip></td>
+                        <td class="text-xs-center"><v-tooltip bottom>
+                            <span slot="activator">{{props.item.LastEditDate.displayVal}}</span>
+                            <span>{{props.item.LastEditUser}} - {{getFullDateDisplay(props.item.LastEditDate)}}</span>
+                        </v-tooltip></td>
                     </template>
                 </v-data-table>
             </v-flex>
         </v-layout>
     `,
+    //:class="['column', 'sortable', col.sortBy == 'descending' ? 'desc' : 'asc', col.sortBy == 'ascending' ? 'active' : '',  col.sortBy == 'descending' ? 'active' : '']"
+
     data: function(){
         return{
-            //list vars
-            /* copied from Vuetify for data-table w/ CRUD */
             isLoading: true,
+            sharedState: store.state,
             formID: '',
             showSearch: false,
             searchObj: {
@@ -279,19 +281,10 @@ var FormRecords = {
             },
             sortColumns: [],
             pagination: {},
-            sortedRecords: [],
-            data: {
-                FormData:{},
-                Fields: [],
-                ValSets: [],
-                Records: []
-            },
-            recordNumHeader: {text: '', value:'RecordNumber', sortable: false, searchable: false, align: 'right'},
+            tableRecords: [],
             defaultFormHeaders: [
-                {text: 'Last Edit Date', value:'LastEditDate', sortable: true, searchable: true, align: 'center'},
-                {text: 'Last Edit User', value:'LastEditUser', sortable: true, searchable: true, align: 'center'},
-                {text: 'Submit Date', value:'OriginalSubmitDate', sortable: true, searchable: true, align: 'center'},
-                {text: 'Submit User', value:'OriginalSubmitUser', sortable: true, searchable: true, align: 'center'}
+                {text: 'Submitted', value:'OriginalSubmitDate', sortable: true, searchable: true, align: 'center'},
+                {text: 'Last Edited', value:'LastEditDate', sortable: true, searchable: true, align: 'center'},
             ],
             editHeader: {text: 'Edit Record', sortable: false, searchable: false, align: 'center'},
         }
@@ -306,7 +299,7 @@ var FormRecords = {
         next();
     },*/
     watch: {
-        // call again the method if the route changes
+        // call method if the route changes
         '$route': {
             handler(val){
                 this.routeChanged();
@@ -327,153 +320,33 @@ var FormRecords = {
     },
     computed:{
         nextRouteLink: function(){
+            var url = '/'
             if(this.formID){
-                return '/form/' + this.formID.toString() + '/entry/'
+                url = '/form/' + this.formID.toString() + '/entry/'
             }
-            else{
-                return '/'
-            }
+            return url;
         },
         backRouteLink: function(){
             return '/'
         },
         totalRecords: function(){
-            if(this.data.Records){
-                return this.data.Records.length;
-            }
-            else
-                return null;
+            return store.countFormRecords();
         },
-        primaryDateID: function(){
-            if(this.data.FormData){
-                return this.data.FormData.FieldHTMLID_Date;
-            }
-            else return null;
+        records_defaultOrdered: function(){
+            return store.getFormRecords_Ordered();
         },
         primaryDateField: function(){
-            var self = this;
-            var date = null;
-            if(this.data.FormData && this.data.Fields){
-                date = this.data.Fields.find(function(f){
-                    return f.FieldHTMLID == self.primaryDateID;
-                });
-            }
-            return date;
+            return store.getField_PrimaryDate();
         },
         visibleFields: function(){
-            var self = this;
-            var fields = {};
-            if(this.primaryDateField){
-                fields = this.data.Fields.filter(function(f){
-                    return f.FieldHTMLID != self.primaryDateID;
-                });
-            }
-            else{
-                fields = this.data.Fields;
-            }
-
-            return fields.sort(function(a,b){
-                return a.FieldOrder - b.FieldOrder;
-            });
-        },
-        recordColumns: function(){
-            var self = this;
-            var arr = [];
-            var field, valPropname, header, sortBy, defaultSortOrder;
-
-            if(this.formID >= 86 && this.formID <= 90 ){
-                field = {FieldTypeID: null, FieldType: 'GUID'};
-            }
-            else{
-                field = {FieldTypeID: null, FieldType: 'INT'};
-            }
-            valPropname = this.recordNumHeader.value;
-            header = this.recordNumHeader;
-            sortBy = 'descending';
-            defaultSortOrder = 1;
-
-            arr.push({field: field, valPropname: valPropname, header: header, sortBy: sortBy, defaultSortOrder: defaultSortOrder});
-
-
-            if(this.data.FormData){
-                if(this.primaryDateField){
-                    field = self.primaryDateField;
-                    valPropname = self.primaryDateField.FieldHTMLID;
-                    header = {text: self.primaryDateField.FieldName, value: self.primaryDateField.FieldHTMLID, sortable: true, searchable: true, align: 'center'};
-                    sortBy = 'descending';
-                    defaultSortOrder = null;
-
-                    arr.push({field: field, valPropname: valPropname, header: header, sortBy: sortBy, defaultSortOrder: defaultSortOrder});
-                }
-
-                this.visibleFields.forEach(function(f){
-                    field = f;
-                    valPropname = f.FieldHTMLID;
-                    var canSort = true;
-                    if(f.FieldTypeID == 5 || f.FieldTypeID == 6){
-                        canSort = false;
-                    }
-                    header = {text:f.FieldName, value: f.FieldHTMLID, sortable: canSort, searchable: false, align: 'center'};
-                    sortBy = null;
-                    defaultSortOrder = null;
-
-                    arr.push({field: field, valPropname: valPropname, header: header, sortBy: sortBy, defaultSortOrder: defaultSortOrder});
-                });
-            }
-
-            this.defaultFormHeaders.forEach(function(h){
-                sortBy = null;
-                defaultSortOrder = null;
-
-                valPropname = h.value;
-                if(valPropname == 'LastEditDate' || valPropname == 'OriginalSubmitDate'){
-                    field = {FieldTypeID: null, FieldType: 'DATETIME'};
-                    if(valPropname == 'OriginalSubmitDate'){
-                        sortBy = 'descending';
-                        defaultSortOrder = 0;
-                    }
-                }
-                else{
-                    field = {FieldTypeID: null, FieldType: 'TEXT'};
-                }
-                header = h;
-                /*if(h.text != 'Edit Record'){
-                    valPropname = h.value;
-                }
-                else{
-                    valPropname = null;
-                }*/
-
-                arr.push({field: field, valPropname: valPropname, header: header, sortBy: sortBy, defaultSortOrder: defaultSortOrder});
-            });
-            
-
-            return arr;
-        },
-        recordHeaders: function(){
-            var self = this;
-            var headers = [];
-
-            if(this.recordColumns){
-                headers = this.recordColumns.map(function(c){
-                    return c.header;
-                });
-            }
-            headers.push(self.editHeader);
-            return headers;
-        },
-        defaultSortColumns: function(){
-            return this.recordColumns.filter(function(c){
-                return c.defaultSortOrder != null;
-            }).sort(function(a,b){
-                return a.defaultSortOrder - b.defaultSortOrder;
-            });
+            return store.getFieldsInHeader_Ordered();
         },
     },
     methods: {
         initialize: function(){
             console.log("init Records");
             var self = this;
+            this.isLoading = true;
 
             this.formID = this.$route.params.formid;
 
@@ -484,7 +357,7 @@ var FormRecords = {
             });
         },
         routeChanged: function(){
-            console.log("FormRecords - Route Changed");
+            if(this.debug) console.log("FormRecords - Route Changed");
             //this.initialize();
         },
         listenOnHub: function(){
@@ -506,35 +379,19 @@ var FormRecords = {
             self.isLoading = true;
             
             $.post('https://query.cityoflewisville.com/v2/',{
-                webservice : 'PSOFIAv2/Get Form Records',
+                webservice : 'PSOFIAv2/Get Form Records2',
                 formID: self.formID
             },
-            function(dataX){
-                //console.log(dataX);
-                self.data.FormData = dataX.FormData[0];
-                self.data.Fields = dataX.FormFields;
-                self.data.ValSets = dataX.FormValSets;
-                self.data.Records = dataX.FormRecords;
+            function(data){
+                store.loadColumns(data.Columns, ['allforms', 'formData', 'fields','vsOptions','record']);
+                store.loadFormData(data.FormData);
+                store.loadFormFields(data.FormFields);
+                store.loadFormVSOptions(data.FormVSOptions);
+                store.loadFormRecords(data.FormRecords);
 
-                // add store
-                //store.setAllForms(dataX.Forms);
-
-                store.loadFormData(dataX.FormData[0]);
-                store.loadFormFields(dataX.FormFields);
-                store.loadFormVSOptions(dataX.FormValSets);
-                store.loadFormRecords(dataX.FormRecords);
-
-                    Vue.nextTick(function(){
-                        if(self.primaryDateField){
-                            self.sortColumns.push(self.recordColumns.find(function(c){
-                                return c.valPropname == self.primaryDateField.FieldHTMLID;
-                            }));
-                        }
-
-                        self.sortedRecords = self.sortRecords();
-
-                        self.isLoading = false;
-                    });
+                Vue.nextTick(function(){
+                    self.isLoading = false;
+                });
             })
             .fail(function(dataX){
                 console.log('Webservice Fail: Get All Forms');
@@ -571,23 +428,33 @@ var FormRecords = {
                 return '/';
             }
         },
-        getDisplayClass: function(col){
-            if( col.field.FieldTypeID == 3 || col.field.FieldType == 'INT'){ // number
+        getDisplayClass: function(field){
+            if( field.FieldTypeID == 3 || field.FieldType == 'INT'){ // number
                 return 'text-xs-right';
             }
-            else if (col.field.FieldTypeID == 4 || col.field.FieldTypeID == 5 || col.field.FieldType == 'TEXT'){
+            else if (field.FieldTypeID == 4 || field.FieldTypeID == 5 || field.FieldType == 'TEXT'){
                 return 'text-xs-left';
             }
             else{   // date: 1, time: 2, checkbox: 6, select: 7
                 return 'text-xs-center';
             }
         },
-        getDisplayData: function(record, col){
-            var self = this;
-            var dataObj = getPropVal(record, col.valPropname, col.field);
-            return dataObj.displayVal;
+        getColDisplayVal: function(record, field){
+            var colObj = record[field.FieldHTMLID];
+            return colObj.displayVal;
         },
-        changeSort: function(col){
+        getColKey: function(record, field){
+            var keyStr = record.RecordNumber.val + '-' + field.FormFieldID;
+            console.log(keyStr);
+            return keyStr;
+        },
+        getFullDateDisplay: function(dateObj){
+            if(dateObj.val){
+                return getFullDateStr(dateObj.val, 'default', 'default', true, 'default', 'prepend');
+            }
+            else return dateObj.displayVal;
+        },
+        /*changeSort: function(col){
             var self = this;
             if(!(col.sortBy)){
                 col.sortBy = 'ascending';
@@ -621,8 +488,8 @@ var FormRecords = {
             var moDiff;
             var returnVal;
 
-            if(this.data.Records){// && (this.data.Records[0].RecordNumber != null && this.data.Records[0].OriginalSubmitDate != null)){
-                return this.data.Records.sort(function(a,b){
+            if(this.sharedState.form.records){// && (this.data.Records[0].RecordNumber != null && this.data.Records[0].OriginalSubmitDate != null)){
+                return this.sharedState.form.records.sort(function(a,b){
                     returnVal = 0;
 
                     // if user has chosen column field to be sorted
@@ -645,13 +512,13 @@ var FormRecords = {
             else{
                 return [];
             }
-        },
+        },*/
     }
 }
 
 var Entry = {
     template: `
-        <v-layout row wrap>
+        <v-layout row wrap v-if="!isLoading">
             <v-flex xs12>
                 <v-spacer></v-spacer>
                 <v-btn icon :to="backRouteLink">
@@ -674,14 +541,19 @@ var Entry = {
                     </v-card-actions>
                 </v-card>
             </v-flex>
+            <psofia-form-data>
+            </psofia-form-data>
+            <psofia-form-section v-for="section in orderedSections" :key="section.FormSectionID"
+                :form-section-id="section.FormSectionID">
+            </psofia-form-section>
         </v-layout>
     `,
     data: function(){
         return{
             isLoading: true,
+            sharedState: store.state,
             formID: '',
             recordNum: '',
-
         }
     },
     computed:{
@@ -706,6 +578,10 @@ var Entry = {
             else{
                 return '/'
             }
+        },
+        orderedSections:function (){
+            var self = this;
+            return store.getFormSections_Ordered();
         },
     },
     created: function(){
@@ -735,7 +611,8 @@ var Entry = {
             this.recordNum = this.$route.params.recordnum;
 
             Vue.nextTick(function(){
-                self.openOldVersion();
+                //self.openOldVersion();
+                self.getFormEntry();
             });
         },
         openOldVersion: function(){
@@ -745,6 +622,43 @@ var Entry = {
             console.log("Entry - Route Changed");
             //this.initialize();
         },
+        getFormEntry:function(){
+            console.log("getFormEntry");
+            var self = this;
+
+            self.isLoading = true;
+            console.log(this.recordNum);
+            
+            $.post('https://query.cityoflewisville.com/v2/',{
+                webservice : 'PSOFIAv2/Get Form Entry2',
+                formID: this.formID,
+                recordNumber: this.recordNum
+            },
+            function(data){
+                store.loadColumns(data.Columns, ['formData', 'sections', 'subSections', 'fields','valSets', 'vsOptions','record']);
+                store.loadFormData(data.FormData);
+                store.setFormSections(data.FormSections);
+                store.setFormSubSections(data.FormSubSections);
+                store.setFormFields(data.FormFields);
+                store.setFormValSets(data.FormValSets);
+                store.setFormVSOptions(data.FormVSOptions);
+
+                if(data.FormRecord.length > 0){
+                    store.setFormRecord(data.FormRecord[0]);
+                }
+                else{
+                    store.setFormRecord_Null();
+                }
+
+                Vue.nextTick(function(){
+                    self.isLoading = false;
+                });
+            })
+            .fail(function(data){
+                console.log('Webservice fail: Get Form Entry');
+                self.isLoading = false;
+            });
+        }
     }
 }
 

@@ -2,13 +2,14 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>PSOFIAv2 Form Builder</title>
+    <title>PSOFIAv2 Form Entry</title>
     <!-- force no compatibility mode in IE -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!-- google fonts -->
     <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Product+Sans:400,400i,700,700i" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
     <!-- styles -->
     <!--<link rel="stylesheet" type="text/css" href="style.css" media="screen" />-->
     <!--<link rel="stylesheet" title="styles" href="materialize/css/materialize.min.css">-->
@@ -18,8 +19,6 @@
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <!-- Vue Router -->
     <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
-    <!--VueX -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vuex/3.0.1/vuex.min.js"></script>
     <!-- Vuetify -->
     <script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
     <!-- axios -->
@@ -33,11 +32,10 @@
     <!-- my script - data functions / get val from sql value + formatting -->
     <script type="text/javascript" src="../scripts/dataFunctions.js"></script>
     <!-- my script - Store -->
-    <script type="text/javascript" src="../scripts/store.js"></script>
-    <script type="text/javascript" src="../scripts/storeX.js"></script>
+    <script type="text/javascript" src="../scripts/storeA.js"></script>
     <!-- polyfills - Object.assign -->
     <script type="text/javascript" src="../scripts/polyfills.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.js"></script>
+
     <!-- materialize -->
     <!--<script src="materialize/js/materialize.js"></script>-->
     <!-- city oauth -->
@@ -46,20 +44,14 @@
     <!-- mobile friendly -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <script src="../components/builder-form-data-v.js"></script>
-    <script src="../components/builder-form-section-v.js"></script>
-
-    <script src="../components/builder-text-v.js"></script>
-    <script src="../components/builder-autocomplete-v.js"></script>
-    <script src="../components/builder-combobox-v.js"></script>
-    <script src="../components/builder-checkbox-v2.js"></script>
-    <script src="../components/builder-dept-dialog-v.js"></script>
-
-    <script src="../components/builder-fields-table-v.js"></script>
-    <script src="../components/builder-field-dialog-v.js"></script>
-
-    <script src="../components/builder-number-v.js"></script>
-
+    <script src="../components/psofia-form-data.js"></script>
+    <script src="../components/psofia-form-section.js"></script>
+    <script src="../components/psofia-form-field.js"></script>
+    <script src="../components/psofia-text.js"></script>
+    <script src="../components/psofia-text-area.js"></script>
+    <script src="../components/psofia-number.js"></script>
+    <script src="../components/psofia-checkbox.js"></script>
+    <script src="../components/psofia-autocomplete.js"></script>
 </head>
 
 <body>
@@ -67,9 +59,18 @@
     <v-app>
         <!-- colored toolbar -->
         <v-toolbar app dense flat dark color="indigo">
-            <v-toolbar-title>PSOFIAv2 Form Builder</v-toolbar-title>
+            <v-toolbar-side-icon></v-toolbar-side-icon>
+            <v-toolbar-title>PSOFIAv2 Form Entry</v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-toolbar-title>{{userEmail}}</v-toolbar-title>
+            <v-toolbar-items>
+                <v-btn flat>{{userEmail}}</v-btn>
+            </v-toolbar-items>
+            <v-btn icon>
+                <v-icon>refresh</v-icon>
+            </v-btn>
+            <!--<v-btn icon @click="goBack">
+                <v-icon>arrow_back</v-icon>
+            </v-btn>-->
         </v-toolbar>
         <v-content>
             <v-container fluid>
@@ -80,6 +81,6 @@
     </div>
 
     <!-- source code -->
-    <script type="text/javascript" src="app_router.js"></script>
+    <script type="text/javascript" src="app_router2.js"></script>
 </body>
 </html>

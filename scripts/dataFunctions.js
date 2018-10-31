@@ -4,6 +4,13 @@ function clone(obj) {
     // Handle the 3 simple types, and null or undefined
     if (null == obj || "object" != typeof obj) return obj;
 
+
+    // Handle Moment
+    if (obj instanceof moment) {
+        copy = obj.clone();
+        return copy;
+    }
+
     // Handle Date
     if (obj instanceof Date) {
         copy = new Date();
@@ -32,47 +39,55 @@ function clone(obj) {
     throw new Error("Unable to copy obj! Its type isn't supported.");
 }
 
+
 function getPropVal (dataObj, propname, propType){ //getFieldVal(dataArr, valPropname, field)
     var self = this;
     var valObj;
     var val;
     var displayVal = '';
+    var dbVal;
+    var valErr = false;
     var valType;
     var vsOptions;
     if(store.state.form){
         vsOptions = store.state.form.vsOptions;
     }
 
-    if(dataObj[propname]){
+    if(dataObj.hasOwnProperty(propname) && dataObj[propname]){
         if(propType && propType.FieldTypeID && propType.FieldTypeID > 0 && propType.FieldTypeID <= 7){
             switch(parseInt(propType.FieldTypeID)){
                 case 1: // date
                     valObj = formatDate(dataObj[propname], 'default');
                     val = valObj.momentDate;
                     displayVal = valObj.str;
+                    dbVal = valObj.str;
                     valType = 'date';
                     break;
                 case 2: // time ??
                     valObj = formatTime(dataObj[propname], 'default');
                     val = valObj.momentDate;
                     displayVal = valObj.str;
+                    dbVal = valObj.str;
                     valType = 'date';
                     break;
                 case 3: // number
                     valObj = Number(dataObj[propname]);
                     val = parseFloat(dataObj[propname]);
                     displayVal = val.toString();
+                    dbVal = val;
                     valType = 'number';
                     break;
                 case 4: // text,
                 case 5: // text area
-                    val = dataObj[propname].toString().toUpperCase();
                     displayVal = dataObj[propname];
+                    val = displayVal.toString().toUpperCase();
+                    dbVal = displayVal;
                     valType = 'string';
                     break;
                 case 6: // checkbox
                     val = dataObj[propname];
                     displayVal = dataObj[propname] ? 'true' : 'false';
+                    dbVal = val;
                     valType = 'boolean';
                     break;
                 case 7: // valset
@@ -82,6 +97,7 @@ function getPropVal (dataObj, propname, propType){ //getFieldVal(dataArr, valPro
                         });
                         val = valObj.EntryValue;
                         displayVal = valObj.EntryName;
+                        dbVal = val;
                         valType = 'set';
                     }
                     else{
@@ -92,55 +108,131 @@ function getPropVal (dataObj, propname, propType){ //getFieldVal(dataArr, valPro
         }
         else if(propType){
             if(propType.FieldType.toUpperCase().indexOf('INT') > -1){
+                valObj = Number(dataObj[propname]);
                 val = parseInt(dataObj[propname]);
                 displayVal = val.toString();
+                dbVal = val;
                 valType = 'number';
             }
             else if(propType.FieldType.toUpperCase().indexOf('DOUBLE') > -1 || propType.FieldType.toUpperCase().indexOf('NUMBER') > -1){
+                valObj = Number(dataObj[propname]);
                 val = parseFloat(dataObj[propname]);
                 displayVal = val.toString();
+                dbVal = val;
                 valType = 'number';
             }
             else if(propType.FieldType.toUpperCase().indexOf('DATE') > -1 || propType.FieldType.toUpperCase().indexOf('TIME') > -1){
                 valObj = formatDateTime(dataObj[propname], 'default', 'default', true);
                 val = valObj.momentDate;
                 displayVal = valObj.str;
+                dbVal = displayVal;
                 valType = 'date';
             }
             else if (propType.FieldType.toUpperCase().indexOf('TEXT') > -1){
-                val = dataObj[propname].toString().toUpperCase();
                 displayVal = dataObj[propname];
+                val = displayVal.toString().toUpperCase();
+                dbVal = displayVal;
                 valType = 'string';
             }
             else if (propType.FieldType.toUpperCase().indexOf('BOOL') > -1){
                 val = dataObj[propname];
                 displayVal = dataObj[propname] ? 'true' : 'false';
+                dbVal = val;
                 valType = 'boolean';
+            }
+            else if(propType.FieldType.toUpperCase().indexOf('GUID') > -1){
+                dbVal = dataObj[propname];
+                val = displayVal.toString().toUpperCase();
+                displayVal = '';
+                valType = 'string';
             }
             else{
                 val = dataObj[propname];
                 displayVal = val.toString();
+                dbVal = val;
                 valType = 'unknown';
             }
         }
         else{
             val = dataObj[propname];
             displayVal = val.toString();
+            dbVal = val;
             valType = 'unknown';
         }
     }
-    return {valObj:valObj, val:val, displayVal:displayVal, valType:valType};
+    else if( dataObj.hasOwnProperty(propname) && propType &&
+        ((propType.FieldTypeID && propType.FieldTypeID == 6) || (propType.FieldType.toUpperCase().indexOf('BOOL') > -1))
+    ){
+        // checkbox
+        val = dataObj[propname];
+        displayVal = dataObj[propname] ? 'true' : 'false';
+        dbVal = val;
+        valType = 'boolean';
+
+    }
+
+    return {valObj:valObj, val:val, displayVal:displayVal, dbVal: dbVal, valType:valType};
+}
+
+function getNullPropVal(){
+    var valObj;
+    var val;
+    var displayVal = '';
+    var dbVal = null;
+    var valType = 'unknown';
+    return {valObj:valObj, val:val, displayVal:displayVal, dbVal: dbVal, valType:valType};
+}
+
+function getNullPropVal_Field(fieldObj){
+    var valObj;
+    var val;
+    var displayVal = '';
+    var dbVal = null;
+    var valType = 'unknown';
+
+    switch(fieldObj.FieldTypeID){
+        case 1: // date
+            valObj = formatDate(moment(), 'default');
+            val = valObj.momentDate;
+            displayVal = valObj.str;
+            dbVal = valObj.str;
+            valType = 'date';
+            break;
+        case 2: // time ??
+            valObj = formatTime(moment(), 'default');
+            val = valObj.momentDate;
+            displayVal = valObj.str;
+            dbVal = valObj.str;
+            valType = 'date';
+            break;
+        case 6: // checkbox
+            val = 0;
+            displayVal = 'false';
+            dbVal = 0;
+            valType = 'boolean';
+            break;
+    }
+
+    return {valObj:valObj, val:val, displayVal:displayVal, dbVal: dbVal, valType:valType};
+}
+
+function getBuiltInPropVal (dataObj, propname){
+    var propType = getPropType(propname, dataObj);
+    return getPropVal(dataObj, propname, propType);
 }
 
 function comparePropVals (propValA, propValB){   //compareFieldVals(fieldValA, fieldValB)
     var returnVal = 0;
 
+    //console.log(propValA.valType + ' '  + propValB.valType + '  ' + returnVal);
+
     if(propValA.valType == 'date' && propValB.valType == 'date'){
-        moDiff = (propValA.val).diff(propValB.val);
+        moDiff = propValA.val.diff(propValB.val);
+        //console.log(moDiff);
         if(moDiff < 0){
             returnVal = -1;
         }
-        if(moDiff > 0){
+        else if(moDiff > 0){
             returnVal = 1;
         }
     }
@@ -152,7 +244,7 @@ function comparePropVals (propValA, propValB){   //compareFieldVals(fieldValA, f
             returnVal = 1;
         }
     }
-    else{
+    else if (propValA.valType == propValB.valType){
         if(propValA.val == null || propValB.val == null){
             if((propValA.val == null) && propValB.val){
                 returnVal = 1;
@@ -167,6 +259,34 @@ function comparePropVals (propValA, propValB){   //compareFieldVals(fieldValA, f
             }
             if(propValA.val > propValB.val){
                 returnVal = 1;
+            }
+        }
+    }
+    // prop types don't match
+    else{
+        console.log("COMPARING TWO DIFFERENT TYPES - " + propValA.valType + ' ? ' + propValB.valType);
+        if(propValA.valType == 'boolean' && propValB.valType != 'boolean'){
+            returnVal = 1;
+        }
+        else if(propValA.valType != 'boolean' && propValB.valType == 'boolean'){
+            returnVal = -1;
+        }
+        else{
+            if(propValA.val == null || propValB.val == null){
+                if((propValA.val == null) && propValB.val){
+                    returnVal = 1;
+                }
+                else if(propValA.val && (propValB.val == null)){
+                    returnVal = -1;
+                }
+            }
+            else {
+                if(propValA.val < propValB.val){
+                    returnVal = -1;
+                }
+                if(propValA.val > propValB.val){
+                    returnVal = 1;
+                }
             }
         }
     }
@@ -199,65 +319,63 @@ function compareByPropForSort (sortBy, dataObjA, dataObjB, propname, propType){ 
     return returnVal;
 }
 
-function getPropType(propname){
+function compareFieldsByProp (fieldA, fieldB, propname){
+    var propTypeA = getPropType(propname, fieldA);
+    var propTyepB = getPropType(propname, fieldB);
+    var propValA = getPropVal(fieldA, propname, propTypeA);
+    var propValB = getPropVal(fieldB, propname, propTyepB);
+
+    return comparePropVals(propValA, propValB);
+}
+
+function compareFieldsByPropForSort (sortBy, fieldA, fieldB, propname){
+    var propTypeA = getPropType(propname, fieldA);
+    var propTyepB = getPropType(propname, fieldB);
+    var propValA = getPropVal(fieldA, propname, propTypeA);
+    var propValB = getPropVal(fieldB, propname, propTyepB);
+
+    var returnVal = comparePropVals(propValA, propValB);
+
+    // don't change sign if comparison included a null
+    if(propValA.val && propValB.val && (sortBy == 'descending' || sortBy == 'desc')){
+        returnVal = returnVal * -1;
+    }
+
+    return returnVal;
+}
+
+function getPropType(propname, dataObj){
     var fieldType;
-    if (propname == 'Active' || propname == 'RefreshOnSubmit'|| propname == 'Required' || propname == 'VisibleOnEdit'){
+    // RecordNumber may be int or 
+    if(dataObj.hasOwnProperty('FieldTypeID') || dataObj.hasOwnProperty('FieldType')){
+        return datObj;
+    }
+    else if(propname.toUpperCase() == 'RECORDNUMBER'){
+        if(dataObj.hasOwnProperty(propname) && dataObj[propname]){
+            if(parseInt(dataObj[propname]) == NaN){
+                fieldType = 'GUID';
+            }
+            else fieldType = 'INT';
+        }
+        else fieldType = 'INT';
+    }
+    else if (propname.toUpperCase() == 'ACTIVE' || propname.toUpperCase() == 'REFRESHONSUBMIT'|| propname.toUpperCase() == 'REQUIRED' || propname.toUpperCase() == 'VISIBLEONEDIT'){
         fieldType = 'BOOL';
     }
-    else if(propname.slice(-2) == 'ID' || propname.slice(-5) == 'Order'){
+    else if(propname.toUpperCase().slice(-2) == 'ID' || propname.toUpperCase().slice(-5) == 'ORDER'){
         fieldType = 'INT';
     }
-    else if (propname == 'FieldMin' || propname == 'FieldMax'){
+    else if (propname.toUpperCase() == 'FIELDMIN' || propname.toUpperCase() == 'FIELDMAX'){
         fieldType = 'NUMBER';
+    }
+    else if(propname.toUpperCase().indexOf('DATE') > -1){
+        fieldType = 'DATETIME';
     }
     else{
         fieldType = 'TEXT';
     }
 
     return {FieldTypeID: null, FieldType: fieldType}
-}
-
-function compareFieldsByProp (fieldA, fieldB, propname){
-    var propType;
-    if(fieldA.FieldTypeID && fieldB.FieldTypeID){
-        if(fieldA.FieldTypeID == fieldB.FieldTypeID){
-            propType = {FieldTypeID: fieldA.FieldTypeID, FieldType: fieldA.FieldType, ValidationSetID: fieldA.ValidationSetID};
-            return this.compareByProp(fieldA, fieldB, propname, propType);
-        }
-        else{
-            console.log("incompatible field types for comparison - FieldTypeID " + fieldA.FieldTypeID + " : " + fieldB.FieldTypeID);
-            return 0;
-        }
-    }
-    else if(fieldA.FieldType && fieldB.FieldType){
-        if(fieldA.FieldType == fieldB.FieldType){
-            return propType = {FieldTypeID: fieldA.FieldTypeID, FieldType: fieldA.FieldType, ValidationSetID: fieldA.ValidationSetID};
-        }
-        else{
-            console.log("incompatible field types for comparison");
-            return 0;
-        }  
-    }
-    else{
-        console.log("incompatible field types for comparison");
-        return 0;
-    }
-}
-
-function compareFieldsByPropForSort (sortBy, fieldA, fieldB, propname){
-    var propType;
-    if(fieldA.FieldTypeID && fieldB.FieldTypeID && fieldA.FieldTypeID == fieldB.FieldTypeID){
-        propType = {FieldTypeID: fieldA.FieldTypeID, FieldType: fieldA.FieldType, ValidationSetID: fieldA.ValidationSetID};
-        return this.compareByPropForSort(sortBy, fieldA, fieldB, propname, propType);
-    }
-    else if(fieldA.FieldType && fieldB.FieldType && fieldA.FieldType == fieldB.FieldType){
-        propType = {FieldTypeID: fieldA.FieldTypeID, FieldType: fieldA.FieldType, ValidationSetID: fieldA.ValidationSetID};
-        return this.compareByPropForSort(sortBy, fieldA, fieldB, propname, propType); 
-    }
-    else{
-        console.log("incompatible field types for comparison");
-        return 0;
-    }
 }
 
 

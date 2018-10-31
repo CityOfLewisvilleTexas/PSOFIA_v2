@@ -28,12 +28,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	
 	<script src="../components/form-section.js"></script>
+    <script src="../components/form-sub-section.js"></script>
 	<script src="../components/form-field.js"></script>
+    
+    <script src="../components/number-field.js"></script>
+    <script src="../components/checkbox-field.js"></script>
+    <script src="../components/select-field.js"></script>
+    <script src="../components/select-field-category.js"></script>
+
+    <script src="../components/text-field.js"></script>
+    <script src="../components/email-field.js"></script>
+    <script src="../components/text-area-field.js"></script>
+
 	<script src="../components/date-field.js"></script>
-	<script src="../components/text-field.js"></script>
-	<script src="../components/number-field.js"></script>
-	<script src="../components/checkbox-field.js"></script>
-	<script src="../components/select-field.js"></script>
+    <!--<script src="../components/time-field.js"></script>-->
+    <script src="../components/year-field.js"></script>
 </head>
 
 <body>
@@ -62,8 +71,7 @@
 					<form-section v-for="s in formSections" :key="s.FormSectionID" :section="s" :sub-sections="getSubSections(s)" :fields="getSectionFields(s)" :vs-sets="data.ValidationSets" :vs-options="data.VSOptions">
 					</form-section>
 					<!-- section end -->
-					
-                    
+				  
                 </div>
             </div>
         </div>

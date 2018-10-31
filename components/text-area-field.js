@@ -1,4 +1,4 @@
-Vue.component('text-field', {
+Vue.component('text-area-field', {
 	// declare the props
 	props: {
 		field:{
@@ -6,19 +6,19 @@ Vue.component('text-field', {
 			required: true
 		},
 	},
-	template: '\
-		<div class="input-field col s12 l10 offset-l1">\
-			<input\
-				type="text"\
-				:id="field.FieldHTMLID"\
-				:ref="field.FormFieldID"\
-				v-bind:value="field.fieldVal"\
-				v-on:input="updateValue($event.target.value)"\
-				v-on:focus="selectAll"\
-			>\
-			<label v-if="field.FieldName">{{field.FieldName}}</label>\
-		</div>\
-	',
+	template: `
+		<div class="input-field col s12 l10 offset-l1">
+			<textarea
+				class="materialize-textarea"
+				:id="field.FieldHTMLID"
+				:ref="field.FormFieldID"
+				v-bind:value="field.fieldVal"
+				v-on:input="updateValue($event.target.value)"
+				v-on:focus="selectAll"
+			></textarea>
+			<label v-if="field.FieldName" :for="field.FieldHTMLID">{{field.FieldName}}</label>
+		</div>
+	`,
 	/*v-bind:value="field.value"\
 				v-on:input="updateValue($event.target.value)"\
 				v-on:focus="selectAll"\
@@ -31,7 +31,7 @@ Vue.component('text-field', {
 	},
 	methods:{
 		updateValue: function (value) {
-			//Can't trim to keep space at end while typing
+			// Can't trim to keep spaces at end while typing
 			/*var formattedValue = value.trim();
 			// If the value was not already normalized,
 			// manually override it to conform

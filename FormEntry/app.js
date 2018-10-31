@@ -102,17 +102,28 @@ var app = new Vue({
 				
 				app.data.Fields.forEach(function(field){
 					Vue.set(field, 'updateDB', false);
-					if(app.data.Record.length > 0){
+					if(app.data.Record && app.data.Record.length > 0){
 						
 						//Vue.set(field, 'fieldVal', app.data.Record[0][field.FieldHTMLID]);
 						
 						switch(field.FieldType){
 							case 'DATE':
-								Vue.set(field, 'fieldVal', moment(app.data.Record[0][field.FieldHTMLID]).format('YYYY-MM-DD'));
+								Vue.set(field, 'fieldVal', moment(app.data.Record[0][field.FieldHTMLID], 'YYYY-MM-DD').format('YYYY-MM-DD'));
+								break;
+							case 'YEAR':
+								Vue.set(field, 'fieldVal', moment(app.data.Record[0][field.FieldHTMLID], 'YYYY').format('YYYY'));
 								break;
 							case 'TIME':
 								//???
 								Vue.set(field, 'fieldVal', moment(app.data.Record[0][field.FieldHTMLID]).HTML5_FMT.TIME_SECONDS);
+								break;
+							case 'CHECKBOX':
+								if(app.data.Record[0][field.FieldHTMLID]){
+									Vue.set(field, 'fieldVal', true);
+								}
+								else{
+									Vue.set(field, 'fieldVal', false);
+								}
 								break;
 							default:
 								Vue.set(field, 'fieldVal', app.data.Record[0][field.FieldHTMLID]);
@@ -126,6 +137,10 @@ var app = new Vue({
 								Vue.set(field, 'fieldVal', moment(currentDate).format('YYYY-MM-DD'));
 								field.updateDB = true;
 								break;
+							case 'YEAR':
+								Vue.set(field, 'fieldVal', moment(currentDate).format('YYYY'));
+								field.updateDB = true;
+								break;
 							case 'TIME':
 								//???
 								Vue.set(field, 'fieldVal', moment(currentDate).HTML5_FMT.TIME_SECONDS);
@@ -133,6 +148,10 @@ var app = new Vue({
 								break;
 							case 'CHECKBOX':
 								Vue.set(field, 'fieldVal', false);
+								field.updateDB = true;
+								break;
+							case 'EMAIL':
+								Vue.set(field, 'fieldVal', localStorage.colEmail);
 								field.updateDB = true;
 								break;
 							case 'NUMBER':
@@ -143,10 +162,11 @@ var app = new Vue({
 								break;
 						}
 					}
-					
-					Vue.nextTick(function() {
-						Materialize.updateTextFields()
-					})
+
+				})
+
+				Vue.nextTick(function() {
+					Materialize.updateTextFields()
 				})
 				
 				app.isLoading = false;
@@ -294,11 +314,21 @@ var app = new Vue({
 				f.fieldVal = payload.val;
 				// check if the current record matches
 				if(app.data.Record.length > 0){
-					if(app.data.Record[0][payload.htmlID] !== payload.ID){
-						f.updateDB = true;
+					if(f.fieldType == 'CHECKBOX'){
+						if((app.data.Record[0][payload.htmlID] && payload.val) || (!(app.data.Record[0][payload.htmlID]) && !(payload.val))){
+							f.updateDB = false;
+						}
+						else{
+							f.updateDB = true;
+						}
 					}
 					else{
-						f.updateDB = false;
+						if(app.data.Record[0][payload.htmlID] !== payload.val){
+							f.updateDB = true;
+						}
+						else{
+							f.updateDB = false;
+						}
 					}
 				}
 				else{
@@ -325,16 +355,11 @@ var app = new Vue({
 			else{
 
 				var psofiaData = JSON.stringify(this.newFormValues);
-				var recNum = -1;
 
 				// one last error check
 				if (!psofiaData)
 				{
 					return
-				}
-				
-				if(this.recordNum){
-					recNum = this.recordNum
 				}
 
 				// "send off" the form, scroll to top, change the message
@@ -348,7 +373,7 @@ var app = new Vue({
 					//auth_token: localStorage.colAuthToken,
 					user: localStorage.colEmail,
 					formID: this.formID,
-					recordNumber: recNum,
+					recordNumber: this.recordNum,
 					fields: psofiaData
 				},
 					function(data) {
@@ -359,7 +384,7 @@ var app = new Vue({
 							// allows animation to finish (at least)
 							setTimeout(function() {
 								$('#form').removeClass('blurred')
-								alert('Success! ' + data.Message[0].SubmitMessage + '. <br> page must be reloaded.');
+								alert('Success! ' + data.Message[0].SubmitMessage + '. Page must be reloaded.');
 								//app.isSubmitting = false
 								insertParam('recordNumber', data.Message[0].RecordNumber);
 							}, 500)

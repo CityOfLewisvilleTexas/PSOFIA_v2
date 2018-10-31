@@ -14,6 +14,7 @@ var store = {
             formData: {},
             section: {},
             firstSection: {},
+            lastSection: {},
             subSection: {},
             field: {},
             vsOption: {}
@@ -70,6 +71,10 @@ var store = {
         if (this.debug) console.log('setDefaultFirstSection triggered')
         this.state.default.firstSection = clone(newValue);
     },
+    setDefaultLastSection (newValue) {
+        if (this.debug) console.log('setDefaultLastSection triggered')
+        this.state.default.lastSection = clone(newValue);
+    },
     setDefaultSubSection (newValue) {
         if (this.debug) console.log('setDefaultSubSection triggered')
         this.state.default.subSection = clone(newValue);
@@ -121,9 +126,35 @@ var store = {
 
 
 // computed
-    getMinFieldID(){
+    getMinFormSectionID(){
+        return this.state.form.sections.reduce(function(min, section){
+            return section.FormSectionID < min ? section.FormSectionID : min;
+        }, 0);
+    },
+    getNewFormSectionID(){
+        return this.getMinFormSectionID() - 1;
+    },
+    getMaxFormSectionOrder(){
+        return this.state.form.sections.reduce(function(max, section){
+            return section.SectionOrder > max ? section.SectionOrder : max;
+        }, 0);
+    },
+    getNewFormSectionOrder(){
+        return this.getMaxFormSectionOrder() + 1;
+    },
+    getMinFormFieldID(){
         return this.state.form.fields.reduce(function(min, field){
             return field.FormFieldID < min ? field.FormFieldID : min;
+        }, 0);
+    },
+    getNewFormFieldID(){
+        return this.getMinFormFieldID() - 1;
+    },
+
+
+    getMinSectionID(){
+        return this.state.sections.reduce(function(min, section){
+            return section.SectionID < min ? section.SectionID : min;
         }, 0);
     },
 
@@ -153,6 +184,40 @@ var store = {
     },
 
 // actions
+    addDefaultFormData(){
+        var self = this;
+        var adding;
+        if(!self.state.form.formData){
+            adding = clone(self.state.default.formData);
+            adding.FormID = -1;
+            self.state.form.formData = adding;
+        }
+    },
+    addNewSection(){
+        var self = this;
+        var adding;
+        if(self.state.form.sections.length === 0){
+            self.addFirstSection();
+        }
+        else{
+            adding = clone(self.state.default.section);
+            adding.FormSectionID = self.getNewFormSectionID();
+            adding.SectionOrder = self.getNewFormSectionOrder();
+            self.state.form.sections.push(adding);
+        }
+    },
+    addFirstSection(){
+        var self = this;
+        var adding = clone(self.state.default.firstSection);
+        adding.FormSectionID = self.getNewFormSectionID();
+        self.state.form.sections.push(adding);
+    },
+    addLastSection(){
+        var self = this;
+        var adding = clone(self.state.default.lastSection);
+        adding.FormSectionID = self.getNewFormSectionID();
+        self.state.form.sections.push(adding);
+    },
     getSection(sectionID){
         var sec = this.state.form.sections.find(function(section){
             return section.SectionID == sectionID;
@@ -177,6 +242,13 @@ var store = {
             return null;
         }
     },
+
+    filterSubSections_SecID(sectionID){
+        return this.state.form.subSections.filter(function(ss){
+            return ss.SectionID == sectionID;
+        })
+    },
+
     getSectionProp(sectionID, propName){
         var sec = this.getSection(sectionID)
         if(sec){
@@ -235,7 +307,7 @@ var store = {
     },
 
 
-    compareFields(a, b){
+    compareFieldOrder(a, b){
         var returnVal = 0;
         if(a.SectionOrder < b.SectionOrder){
             returnVal = -1;
@@ -277,6 +349,18 @@ var store = {
         }
         else{
             if (this.debug) console.log('getSection_F: no section found for ID ' + formSectionID);
+            return null;
+        }
+    },
+    getOrigSection_F(formSectionID){
+        var sec = this.state.database.sections.find(function(section){
+            return section.FormSectionID == formSectionID;
+        });
+        if(sec){
+            return sec;
+        }
+        else{
+            if (this.debug) console.log('getOrigSection_F: no original section found for ID ' + formSectionID);
             return null;
         }
     },
@@ -322,7 +406,7 @@ var store = {
         return this.state.form.fields.filter(function(field){
             return field.FormSectionID == formSectionID;
         }).orderBy(function(a,b){
-            return compareFields(a,b);
+            return compareFieldOrder(a,b);
         });
     },
     getFieldsBySecID_F(formSectionID){
@@ -330,7 +414,7 @@ var store = {
         return allFields.filter(function(field){
             return !(field.FormSubSectionID);
         }).orderBy(function(a,b){
-            return compareFields(a,b);
+            return compareFieldOrder(a,b);
         });
     },
 
@@ -359,4 +443,66 @@ var store = {
         f.SectionOrder =  this.getSubSectionProp_F(formSubSectionID, 'SubSectionOrder');
         return f;
     },
+
+
+    updateDataObj(dataObj, origDataObj, valObj){
+        var self = this;
+        if(valObj.val){
+            // check if change to form val
+            if (dataObj[valObj.valPropname] != valObj.val){
+                dataObj[valObj.valPropname] = valObj.val;
+
+                //check if change from original val: if original val is null or original val is different
+                if (!(origDataObj) || origDataObj[valObj.valPropname] != valObj.val){
+                    dataObj.updateDB = true;
+                }
+                else{
+                    dataObj.updateDB = false;
+                }
+
+                // only null text prop if already set (no need for text if val)
+                if (dataObj.hasOwnProperty(valObj.textPropname)){
+                    dataObj[valObj.textPropname] = null;
+                }
+            }
+        }
+        // if only text was sent
+        else if(valObj.text){
+            if(!(dataObj.hasOwnProperty(valObj.textPropname))){
+                Vue.set(dataObj, valObj.textPropname, valObj.text);
+                dataObj[valObj.valPropname] = null;
+                dataObj.updateDB = true;
+            }
+            else if (dataObj.hasOwnProperty(valObj.textPropname) && dataObj[valObj.textPropname] != valObj.text){
+                dataObj[valObj.textPropname] = valObj.text;
+                dataObj[valObj.valPropname] = null;
+                dataObj.updateDB = true;
+            }
+        }
+        // if input cleared
+        else{
+            console.log('null field');
+            dataObj[valObj.valPropname] = null;
+
+            if(dataObj.hasOwnProperty(valObj.textPropname)){
+                dataObj[valObj.textPropname] = null;
+            }
+            if(!(origDataObj) || !(origDataObj[valObj.valPropname])){
+                dataObj.updateDB = false;
+            }
+            else{
+                dataObj.updateDB = true;
+            }
+        }
+    },
+    updateFormData(payload){
+        var dataObj = this.state.form.formData;
+        var origDataObj = this.state.database.formData;
+    },
+    updateSectionData(sectionID, payload){
+
+    },
+    updateField(fieldID, payload){
+
+    }
 }

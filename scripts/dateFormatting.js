@@ -229,7 +229,7 @@ function formatDateTime(date, dateFormat, timeFormat, excludeMidnight){
     delete dateObj.momentDate;
     
     formattedStr = dateObj.str;
-    formatStr = dateObj.formatStr;
+    fullFormatStr = dateObj.formatStr;
 
     if(timeObj){
         // remove moment obj to prevent duplicates?

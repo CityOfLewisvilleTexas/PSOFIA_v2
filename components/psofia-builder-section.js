@@ -1,4 +1,4 @@
-Vue.component('builder-form-section-v', {
+Vue.component('psofia-builder-section', {
 	props: {
 		formSectionId:{
 			type: [Number],
@@ -11,10 +11,10 @@ Vue.component('builder-form-section-v', {
 				<v-toolbar card>
 					<v-toolbar-title class="body-2 grey--text">Section {{formSection.SectionOrder}}</v-toolbar-title>
 					<v-spacer></v-spacer>
-					<v-btn icon @click="moveSectionUp">
+					<v-btn icon disabled @click="moveSectionUp">
 						<v-icon>arrow_upward</v-icon>
 					</v-btn>
-					<v-btn icon @click="moveSectionDown">
+					<v-btn icon disabled @click="moveSectionDown">
 						<v-icon>arrow_downward</v-icon>
 					</v-btn>
 				</v-toolbar>
@@ -23,8 +23,8 @@ Vue.component('builder-form-section-v', {
 					<v-layout row wrap>
 						<v-flex xs12>
 							<builder-combobox-v
-								:field="formSection"
-								:orig-field="origSection"
+								data-portion="section"
+								:form-section-id="formSectionId"
 								:autocomplete-options="allSections"
 								val-propname="SectionID"
 								text-propname="SectionTitle"
@@ -32,7 +32,6 @@ Vue.component('builder-form-section-v', {
 								:id-num="formSectionId"
 								:concat-id="true"
 								label-text="Section Title"
-								data-portion="section"
 							></builder-combobox-v>
 						</v-flex>
 						<v-flex xs12>
@@ -100,7 +99,6 @@ Vue.component('builder-form-section-v', {
 			/* copied from Vuetify for data-table w/ CRUD */
 			showDialog: false,
 			defaultField: {},
-
 			origSection: {},
 			editSection: {},
 		}
@@ -131,69 +129,40 @@ Vue.component('builder-form-section-v', {
 		},
 
 		formSection: function(){
-			return store.getSection_F(this.formSectionId);
+			return store.getFormSection(this.formSectionId);
 		},
-
+		origSection: function(){
+			var self = this;
+			var payload2 = Object.assign(payload, {isOrig: true});
+			return store.getFormSection(payload2);
+		},
 		sectionID:function(){
 			return this.formSection.SectionID;
 		},
-
-		formSubSections:function(){
-			var self = this;
-			return store.filterSubSections_SecID(self.sectionID);
+		sectionTitle: function(){
+			return store.getFormSectionProp(this.formSectionId, 'SectionTitle');
 		},
 
-		sectionTitle: function(){
-			var vm = this;
-			var s = this.allSections.find(function(sF){
-				// DON'T COMPARE TO FormSectionID
-				return vm.formSection.SectionID == sF.SectionID;
-			});
-			if(s){
-				return s.SectionTitle;
-			}
-/* AUTOCOMPLETE - where is update/set? */
-			else{
-				return "ERROR?";
-			}
+		sectionSubSections:function(){
+			return store.getFormSubSections_OrderedInSec(this.formSectionId);
 		},
 
 		sectionFields:function(){
-			return this.sharedState.form.fields.filter(function(f){
-				// IS NOT SubSectionID
-				return (f.FormSectionID == this.formSectionId && f.FormSubSectionID == null);
-			});
-		},
-		orderedFields:function(){
-			if(this.sectionFields){
-				return this.sectionFields.sort(function(a, b){
-	/* NOT SURE ABOUT THIS SORT - null? */
-					return a.SectionOrder - b.SectionOrder || a.FieldOrder - b.FieldOrder;
-				});
-			}
-		},
-		orderedFormSubSections:function(){
-			return this.formSubSections.sort(function(a, b){
-				return a.SubSectionOrder - b.SubSectionOrder;
-			});
+			return store.getFormFields_OrderedInSec(this.formSectionId);
 		},
 	},
 	methods: {
 		initialize: function(){
 			var self = this;
 
-			this.origSection = clone(store.getOrigSection_F(self.formSectionId));
-			this.editSection = clone(store.getSection_F(self.formSectionId));
+			this.origSection = clone(store.getOrigFormSection(self.formSectionId));
+			this.editSection = clone(store.getFormSection(self.formSectionId));
 
-			this.listenOnHub();
+			//this.listenOnHub();
 		},
 		listenOnHub: function(){
 			var self = this;
 			//eventHub.$on('open-edit-dialog-full', self.openDialog);
-		},
-		maxFieldOrder:function(){
-			var self = this;
-			return store.getMaxOrderInSection(self.sectionID);
 		},
 		findInSetByID: function(set, id, idPropname){
             return set.find(function(s){
@@ -203,16 +172,8 @@ Vue.component('builder-form-section-v', {
 
         getDefaultField:function(){
         	var self = this;
-        	return store.getDefaultFieldForSection(self.sectionID);
+        	return store.getDefaultField_ForSection(self.formSectionId);
         },
-        
-
-		getSubSectionFields: function(sub){
-			return this.sectionFields.filter(function(f){
-				// IS NOT SubSectionID?
-				return f.FormSubSectionID == sub.FormSubSectionID;
-			});
-		},
 
 		getFieldType:function(field){
 			var ft = this.allFieldTypes.find(function(f){
@@ -234,7 +195,7 @@ Vue.component('builder-form-section-v', {
 		deleteFieldByID: function(fieldID) {
 			//confirm('Are you sure you want to delete this field?') //&& this.fields.splice(index, 1);
 
-			eventHub.$emit('delete-field', {fieldID: fieldID});
+			//eventHub.$emit('delete-field', {fieldID: fieldID});
 			//this.editingFieldID = null;
         	//this.editingField = clone(self.defaultField);
 		},
