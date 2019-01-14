@@ -15,6 +15,7 @@ Vue.component('text-area-field', {
 				v-bind:value="field.fieldVal"
 				v-on:input="updateValue($event.target.value)"
 				v-on:focus="selectAll"
+				
 			></textarea>
 			<label v-if="field.FieldName" :for="field.FieldHTMLID">{{field.FieldName}}</label>
 		</div>
@@ -31,6 +32,7 @@ Vue.component('text-area-field', {
 	},
 	methods:{
 		updateValue: function (value) {
+			console.log('updateValue');
 			// Can't trim to keep spaces at end while typing
 			/*var formattedValue = value.trim();
 			// If the value was not already normalized,
@@ -49,5 +51,17 @@ Vue.component('text-area-field', {
 				event.target.select()
 			}, 0)
 		}
+	},
+	mounted: function(){
+		console.log('mounted');
+		var vm = this;
+		var s = $('#' + this.field.FieldHTMLID);
+
+		/*s.on('change', function($event){
+			//console.log($event.target.value);
+			vm.updateValue($event.target.value);
+		});*/
+		s.trigger('autoresize');
+		//s.characterCounter();
 	}
 })

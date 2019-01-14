@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+		<title>Redirecting...</title>
+		
+		<script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>	
+
+		<script>			
+			//-------------------------------------------------------------//
+			//Logic
+			// Does a querystring parameter named "originalAppUrl" exist in the url?
+			//	  YES - save this to localStorage.originalAppUrl
+			//	  NO - don't do anything. We will probably get it on another hit
+			//
+			//Is this a previously authenticated user or a brand-new user?
+			//		
+			// 1. Previously authenticated users
+			//	  (localStorage.colAuthToken exists)
+			//
+			//	  A. Has Google just authenticated them?
+			//		 (querystring includes a "code" parameter/value)
+			//		 YES - 
+			//			1) Verify this Google-code server-side (https://query.cityoflewisville.com/authenticate/?code=XXXXXXX)
+			//			2) If valid, a colAuthToken will be returned
+			//			3) Save the colAuthToken and colEmail to localStorage
+			//			4) Return the user to their original application url
+			//       NO - 
+			//			1) Verify their existing, localStorage.colAuthToken server-side
+			//			2) If valid, save the colAuthToken and colEmail to localStorage
+			//			3) Return the user to their original application url
+			//
+			// 2. New users
+			//	  (localStorage.colAuthToken does not exist)
+			//
+			//    A. Has Google just authenticated them?
+			//		 (querystring does not include a "code" parameter/value)
+			//		 YES 
+			//			1) Verify this Google-code server-side (https://query.cityoflewisville.com/authenticate/?code=XXXXXXX)
+			//			2) If valid, a colAuthToken will be returned
+			//			3) Save the colAuthToken and colEmail to localStorage
+			//			4) Return the user to their original application url
+			//		 NO - 
+			//			1) Send them to Google to be authenticated 
+			//			2) Google will send them back to this proxy page. They will go to step 2A
+			//-------------------------------------------------------------//
+			
+			function init(){
+				saveOriginalAppUrl()
+				doTheDance()
+			}
+			
+			function doTheDance(){
+				var _googleCode = getUrlParameterByName('code')
+				var _googleCodeExists = (_googleCode ? true : false)
+				
+				var _colAuthToken = localStorage.colAuthToken
+				var _colAuthTokenExists = (_colAuthToken ? true : false)
+				
+				//````````````````````````````
+				//Previously authenticated user who has just been authenticated with Google
+				//````````````````````````````
+				if (_colAuthTokenExists == true && _googleCodeExists == true){
+				
+					getNewColAuthToken(_googleCode, function(_results){
+						
+						//New colAuthToken was returned by server
+						if ( _results.colAuthToken ){
+							doWhenColAuthTokenIsVerified(_results)
+						}
+						
+						//The user's Google account is not authorized to access this service
+						if ( !_results.colAuthToken ) {
+							localStorage.removeItem('colAuthToken');
+							alert('Access denied. Your Google account is not authorized to access this information.');
+						}
+					})					
+				}			
+				//````````````````````````````
+				//Previously authenticated user whose colAuthToken needs to be re-authenticated by the server
+				//````````````````````````````
+				if (_colAuthTokenExists == true && _googleCodeExists == false){
+				
+					verifyColAuthToken(_colAuthToken, function(_results){
+										
+						//Stale colAuthToken was verified by server
+						if ( _results.isVerified == true ){
+							doWhenColAuthTokenIsVerified(_results)
+						}
+						
+						//No dice. The stale colAuthToken was not validated. Return to Google login to start over
+						if (_results.isVerified == false){
+							getNewGoogleShortLivedToken()
+						}				
+					})
+				}			
+				//````````````````````````````
+				//New user who has just been authenticated with Google
+				//````````````````````````````
+				if (_colAuthTokenExists == false && _googleCodeExists == true){
+				
+					getNewColAuthToken(_googleCode, function(_results){
+						
+						//New colAuthToken was returned by server
+						if ( _results.colAuthToken ){
+							doWhenColAuthTokenIsVerified(_results)
+						}
+						
+						//The user's Google account is not authorized to access this service
+						if ( !_results.colAuthToken ) {
+							localStorage.removeItem('colAuthToken');
+							alert('Access denied. Your Google account is not authorized to access this information.');
+						}
+					})
+					
+				}
+				//````````````````````````````			
+				//New user who needs to be sent to Google to be authenticated
+				//````````````````````````````
+				if (_colAuthTokenExists == false && _googleCodeExists == false){
+				
+					getNewGoogleShortLivedToken()
+					
+				}
+			}
+			
+			
+			
+			
+			//-------------------------------------------------------------//
+			//Functions
+			//-------------------------------------------------------------//
+				function saveOriginalAppUrl(){
+					//Get the querystring parameter "originalAppUrl" and its value
+						var _originalAppUrl = getUrlParameterByName('originalAppUrl')
+					
+					//If the parameter/value exists, store in localStorage
+						if (_originalAppUrl){
+							localStorage.set("originalAppUrl",_originalAppUrl)
+						}
+				}
+				
+				function doWhenColAuthTokenIsVerified(_results){
+					//Save the colAuthToken value in local storage
+						localStorage.colAuthToken = _results.colAuthToken
+						localStorage.colEmail = _results.colEmail
+						
+					//Return user to their original application's url
+						window.location = localStorage.originalAppUrl
+				}
+				
+				function getNewColAuthToken(_googleCode, _callback) {				
+					$.post('https://query.cityoflewisville.com/authenticate/', {
+						code: _googleCode
+					}, 
+					function ( _data ) {				
+						var _colAuthToken = _data[0][0]['AUTH_TOKEN']
+						var _colEmail = _data['Verification'][0]['EMAIL']
+						
+						_callback({ colAuthToken: _colAuthToken, colEmail: _colEmail })					
+					})
+				}
+				
+				//Send COL-Token to server for verification
+				function verifyColAuthToken( _staleColAuthToken) {				
+					$.post('https://query.cityoflewisville.com/v2', {
+						webservice: 'ITS/Verify Auth Token', 
+						auth_token: _staleColAuthToken 
+					}, 
+					function( _data ) {
+						var _colAuthToken = _data[0][0]['AUTH_TOKEN']
+						var _colEmail = _data['Verification'][0]['EMAIL']
+						var _isVerified = (_data['Verification'][0]['VERIFIED'] == 1 ? true : false)
+						
+						_callback({ colAuthToken: _colAuthToken, colEmail: _colEmail, isVerified: _isVerified })					
+					})
+				}	
+				
+				function getNewGoogleShortLivedToken() {
+					//Current site's url
+						var _theCurrentSitesUrl: window.location.href
+						
+					//Save current site's url to localStorage for future re-direct
+						localStorage.redirectUrl = _theCurrentSitesUrl
+					
+					//Bounce the user to Google's oauth-log-in page
+						var _url [
+							'https://accounts.google.com/o/oauth2/v2/auth?',
+							'prompt=select_account',
+							'access_type=offline',
+							'scope=https://www.googleapis.com/auth/userinfo.email+https://www.googleapis.com/auth/userinfo.profile',
+							'response_type=code',
+							'redirect_uri=' + _theCurrentSitesUrl + '',
+							'client_id=819027772449-2us5mt2tu1ec84nve9353qka8i6mfj68.apps.googleusercontent.com'
+						]
+						window.location = _url.join("&")
+				}
+				
+				function getUrlParameterByName(name, url) { 
+					if (!url) url = window.location.href; 
+					name = name.replace(/[\[\]]/g, '\\$&'); 
+					var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'), results = regex.exec(url); 
+					if (!results) return null; 
+					if (!results[2]) return ''; 
+					return decodeURIComponent(results[2].replace(/\+/g, ' '));
+				}
+				
+			//-------------------------------------------------------------//
+			//Master init()
+			//-------------------------------------------------------------//
+				$.document.ready(function(){
+					init()
+				})
+		</script>	
+	</head>
+	<body>
+	</body>
+</html>

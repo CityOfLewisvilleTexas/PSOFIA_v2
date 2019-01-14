@@ -1,3 +1,8 @@
+html, body, #app {
+    margin: 0;
+    height: 100%;
+}
+
 [v-cloak] { display: none }
 
 .date-label {
@@ -38,7 +43,7 @@
     margin-top: 20px;
     margin-bottom: 0 !important;
     padding-bottom: 20px !important;
-    overflow: hidden;
+    overflow: visible;
 }
 
 #form {

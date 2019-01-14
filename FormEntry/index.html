@@ -23,7 +23,19 @@
 	<!-- moment -->
 	<script type="text/javascript" src="../moment/moment.js"></script>
     <!-- city oauth -->
-    <script src="http://apps.cityoflewisville.com/COLSecurity/col_security.js"></script>
+	<script>
+		var _topLevelDomain = window.location.host.split(".")[0]
+		var _colSecurityUrl = ""
+		if (_topLevelDomain == "apps"){
+			_colSecurityUrl = "http://apps.cityoflewisville.com/COLSecurity/col_security.js"
+		}else{
+			_colSecurityUrl = "https://forms.cityoflewisville.com/oauth/col_security.js"
+		}
+		var _scriptElement = document.createElement('script');
+		_scriptElement.src = _colSecurityUrl
+		document.getElementsByTagName('head')[0].appendChild(_scriptElement);
+	</script>
+    <!--<script src="http://apps.cityoflewisville.com/COLSecurity/col_security.js"></script>-->
     <!-- mobile friendly -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	
@@ -59,8 +71,8 @@
         </div>
         <!-- form -->
         <div id="form-holder" class="row grey lighten-3">
-            <!-- welcome message -->
-            <div id="hello" class="row center-align">{{ hello }}</div>
+            <!-- welcome message {{ hello }} -->
+            <div id="hello" class="row center-align">{{ hello }} </div>
             <div class="col s12 m10 l8 xl6 offset-m1 offset-l2 offset-xl3">
                 <div id="form" class="row card z-depth-3" v-if="!isLoading">
                     <div class="col s10 offset-s1 card-title">

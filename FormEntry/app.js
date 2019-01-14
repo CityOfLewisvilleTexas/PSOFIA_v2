@@ -89,7 +89,8 @@ var app = new Vue({
 			$.post('https://query.cityoflewisville.com/v2/',{
 				webservice : 'PSOFIAv2/Get Form Entry',
 				formID: this.formID,
-				recordNumber: this.recordNum
+				recordNumber: this.recordNum,
+				auth_token: localStorage.colAuthToken
 			},
 			function(data){
 				app.data.FormData = data.FormData;
@@ -290,7 +291,7 @@ var app = new Vue({
         checkForUsername: function() {
 
             // ajax
-            $.get('http://ax1vnode1.cityoflewisville.com/ActiveDirectory/getUserByEmail/' + localStorage.colEmail, function(data) {
+            $.get('https://query.cityoflewisville.com/ActiveDirectory/getUserByEmail/' + localStorage.colEmail, function(data) {
 
                 // set username, set hello message (above form)
                 app.username = (data.length) ? data[0].givenName : ''
