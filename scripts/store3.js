@@ -1,184 +1,153 @@
 var store = {
-    debug: true,
+    debug: false,
     warnDebug: true,
     errDebug: true,
     state: {
-        isLoading: true,
-        lastLoad: null,
-        lastChange: null,
-        needsRefresh: false,
-        connections:{
-            isOnLine: true,
-            unsentReq: false,
-            checkServer: true,
-            serverDown: false,
-            sqlDown: false,
-            unsentChecktime: null,
-            serverChecktime: null,
-        },
-        nightView: false,
-
-        user:{
-            isLoading: false,
-                _isLoading:  {token:false, email:false, adAccount:false},
-            lastLoad: null,
-                _lastLoad:  {token:null, email:null, adAccount:null},
-            token: null, email: null, username: null, firstName: null, lastName: null, inITS: false, hideDev: false,
+        routeComponent: null,
+        //isLoading: true,
+        //loadDate: null,
+        //lastChange: null,
+        appSettings:{
+            nightView: false,
+            connections:{ isOnLine: true, unsentReq: false, checkServer: true, serverDown: false, sqlDown: false, unsentChecktime: null, serverChecktime: null, },
+            user:{
+                oauth:{ token:{ isLoading: true, loadDate: null, token: null, }, email:{ isLoading: true, loadDate: null, email: null, }, },
+                adAccount:{ isLoading: true, loadDate: null, firstName: null, lastName: null, username: null, inITS: false, },
+            },
         },
 
-        columns: {
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false, formsList:false, recordsList:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null, formsList:null, recordsList:null},
-            formData: [], formRecord: [],
-                formSections: [], formSubSections: [], formFields: [], formValSets: [], formVsOptions: [],
-                //formVsEntries: [], formVseCategories: [],
-            allForms: [], allDepartments: [], allSections: [], allSubSections: [], allFieldTypes: [], allValSets: [],
-            formsList: [], recordsList: [],
-        },
-        tableIDs:{
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null},
-            formData: null, formRecord: null,
-                formSections: null, formSubSections: null, formFields: null, formValSets: null, formVsOptions: null,
-            allForms: null, allDepartments: null, allSections: null, allSubSections: null, allFieldTypes: null, allValSets: null,
-        },
-        orderIDs:{
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null},
-            formData: null, formRecord: null,
-                formSections: null, formSubSections: null, formFields: null, formValSets: null, formVsOptions: null,
-            allForms: null, allDepartments: null, allSections: null, allSubSections: null, allFieldTypes: null, allValSets: null,
-        },
-
-        datatables:{
-            isLoading: false,
-                _isLoading:  {formsList:false, recordsList:false},
-            lastLoad: null,
-                _lastLoad:  {formsList:null, recordsList:null},
-            formsList: [],          //RESULT SET: Forms (used in List - Forms)
-            recordsList: [],        //RESULT SET: Records (used in List - Records)
-            recordsList_formID: null,   //ugh
-            recordsList_formData: null,
-            recordsList_fields: [],        //RESULT SET: FormFields (used in List - Records)
-            recordsList_vsOptions: [],        //RESULT SET: FormVSOptions (used in List - Records)
-            valSetsList: [],        //RESULT SET: ValSets (used in List - Val Sets)
-            vsOptionsList: [],        //RESULT SET: ValSetOptions (used in List - Val Sets)
-            settings: {
-                formsList:{
+        list:{
+            props:{
+                wsProps:{           // set by user/component (check against return values below, if diff must hide and/or call webservice again)
+                    forms:{ deptID: null, keepInactive: false, onlyInactive: false, },
+                    records:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, },
+                    valSets:{ keepInactive: false, onlyInactive: false, },
+                    vsOptions:{ valSetID: null, keepInactive: false, onlyInactive: false, },
+                },
+                wsProps_returned:{ forms:{ deptID: null, keepInactive: false, onlyInactive: false, }, records:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, }, valSets:{ keepInactive: false, onlyInactive: false, }, vsOptions:{ valSetID: null, keepInactive: false, onlyInactive: false, }, },
+            },
+            forms:{
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+                tableSettings:{
                     searchStr: '', sortBy: [], sortDesc: [],
                     showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
-                    wsProps:{ deptID: null, keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ deptID: null, keepInactive: false, onlyInactive: false, },
                 },
-                recordsList:{
-                    formID: null, searchStr: '', sortBy: [], sortDesc: [],
-                    //paramSpecific: { default: {searchStr: '', sortBy: [], sortDesc: [],}, },        //[formID]: {searchStr: '', sortBy: [], sortDesc: [],},
+            },
+            records:{
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+                tableSettings:{
+                    searchStr: '', sortBy: [], sortDesc: [],
                     showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'left', showColFilters: false, perPage: null,
-                    wsProps:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, },
-                },
-                valSetsList:{
+                }
+            },
+            formData:{      //RESULT SET: FormData (used in List - Records)
+                columns:{ isLoading: false, loadDate: null, dataObj: null, tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: null, },
+            },
+            formFields:{        //RESULT SET: FormFields (used in List - Records)
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+            formVSOptions:{     //RESULT SET: FormVSOptions (used in List - Records)
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+            valSets:{
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+                tableSettings:{
                     searchStr: '', sortBy: [], sortDesc: [],
                     showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
-                    wsProps:{ keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ keepInactive: false, onlyInactive: false, },
                 },
-                vsOptionsList:{
-                    valSetID: null, searchStr: '', sortBy: [], sortDesc: [],
-                    //paramSpecific: { default: {searchStr: '', sortBy: [], sortDesc: [],}, },        //[valSetID]: {searchStr: '', sortBy: [], sortDesc: [],},
+            },
+            vsOptions:{
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+                tableSettings:{
+                    searchStr: '', sortBy: [], sortDesc: [],
                     showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
-                    wsProps:{ valSetID: null, keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ valSetID: null, keepInactive: false, onlyInactive: false, },
                 },
             },
         },
 
-        database:{
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null},
-            formData: null, formRecord: null,
-                formSections: [], formSubSections: [], formFields: [], formValSets: [], formVsOptions: [],
-                //formVsEntries: [], formVseCategories: [],      //vsOptions may be just the data from ValidationSetOptions table, or combo of Options, Entries, and Category tables
-            allForms: [], allDepartments: [], allSections: [], allSubSections: [], allFieldTypes: [], allValSets: [],
-        },
-        // same as database
-        form:{
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null},
-            formData: null, formRecord: null,
-                formSections: [], formSubSections: [], formFields: [], formValSets: [], formVsOptions: [],
-                //formVsEntries: [], formVseCategories: [],      //vsOptions may be just the data from ValidationSetOptions table, or combo of Options, Entries, and Category tables
-            allForms: [], allDepartments: [], allSections: [], allSubSections: [], allFieldTypes: [], allValSets: [],
-        },
-        // specify first and last section, same as database otherwise
-        default:{
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null},
-            formData: null, formRecord: null,
-                formSections: null, firstSection: null, lastSection: null, formSubSections: null, formFields: null, formValSets: null, formVsOptions: null,
-            allForms: null, allDepartments: null, allSections: null, allSubSections: null, allFieldTypes: null, allValSets: null,
-        },
-        // builder only, formFields, (department, validationSets?)
-        dialog:{
-            isLoading: false,
-                _isLoading:  {formFields:false, allDepartments:false, allFieldTypes:false, allValSets: false},
-            lastLoad: null,
-                _lastLoad:  {formFields:null, allDepartments:null, allFieldTypes:null, allValSets: null},
-            formFields: [],  //formValSets: [], formVsOptions: [], //formVsEntries: [], formVseCategories: [],      //vsOptions may be just the data from ValidationSetOptions table, or combo of Options, Entries, and Category tables
-            allDepartments: [], allFieldTypes: [], allValSets: [],
+        build:{
+            props:{
+                //dialog:{ isLoading: false, loadDate: null, dataObj: [], },
+                wsProps:{ formID: null, keepInactive: false, },
+                wsProps_returned:{ formID: null, keepInactive: false, },
+            },
+            formData:{ columns:{ isLoading: false, loadDate: null, dataObj: null, tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: null, }, form:{ isLoading: false, loadDate: null, dataObj: null, }, default:{ isLoading: false, loadDate: null, dataObj: null, }, },
+            formSections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formSubSections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formFields:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], },
+                //dialog:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+            formValSets:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formVsOptions:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            forms:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            departments:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            sections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            subSections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            fieldTypes:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], },
+                //dialog:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+            valSets:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], },
+                //dialog:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+            //build_dialogSettings:{ storeName: null, id: null, isOpen: false, isNew: false, },
         },
 
-        dialogSettings:{
-            storeName: null,
-            id: null,
-            isOpen: false,
-            isNew: false,
+        entry:{
+            props:{
+                wsProps:{ formID: null, recordNumber: null, keepInactive: false, },
+                wsProps_returned:{ formID: null, recordNumber: null, keepInactive: false, },
+            },
+            formData:{ columns:{ isLoading: false, loadDate: null, dataObj: null, tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: null, }, },
+            formRecord:{ columns:{ isLoading: false, loadDate: null, dataObj: null, tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: null, }, form:{ isLoading: false, loadDate: null, dataObj: null, }, default:{ isLoading: false, loadDate: null, dataObj: null, }, },
+            formSections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formSubSections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formFields:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formValSets:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formVsOptions:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, },
         },
+
     },
 
 /* GENERAL NOTES:
-    stateName: first level under this.state - database, form, dialog, default
-    storeName: corresponds to tables in SQL, second level under this.state - formData, formRecords, formSections, formFields
+    storeName: corresponds to tables in SQL, first level under this.state - formData, formRecords, formSections, formFields
+    stateName: second level under this.state - database, form, default, dialog
     vars in functions:
-        storeObj: selected storeName object
-            can be either an object (formData, formRecord), or an array of objects (formSections, formFields, etc), unless specified (usually called storeObjs);
-        dataObj: a specific object in storeObj or the storeObj itself (always for formData, formRecord, if id isn't in payload for storeObj that is an array)
+        storeObj: selected storeName object (obj with all props, actual data in dataObj)
+        dataObj: the dataObj in storeObj (if ID isn't in payload, returns whole array [except formData, formRecord])
         storeObjs/storeArr: must be a storeObj that is an array (formSection, formFields, etc)
             will be filtered?: automatically filters out inactive, unless payload.isActive is sent, filters out anything based on payload.props if included (payload.id should NOT be included);
 */
 
+/* APP SETTINGS */
 
-// ADD TO LIVE FOLDER
+    switchNightView(){
+        this.state.appSettings.nightView = !this.state.appSettings.nightView;
+    },
     setUnsentReq(newVal, checktime){
-        if(!this.state.connections.unsentChecktime || checktime.isAfter(this.state.connections.unsentChecktime)){
-            this.state.connections.unsentChecktime = checktime;
-            if(this.state.connections.unsentReq != newVal) this.state.connections.unsentReq = newVal;
+        if(!this.state.appSettings.connections.unsentChecktime || checktime.isAfter(this.state.appSettings.connections.unsentChecktime)){
+            this.state.appSettings.connections.unsentChecktime = checktime;
+            if(this.state.appSettings.connections.unsentReq != newVal) this.state.appSettings.connections.unsentReq = newVal;
         }
     },
     setServerDown(newVal, checktime){
         // don't set if already set by more recent post
-        if(!this.state.connections.serverChecktime || checktime.isAfter(this.state.connections.serverChecktime)){
-            this.state.connections.serverChecktime = checktime;
-            if(this.state.connections.serverDown != newVal) this.state.connections.serverDown = newVal;
+        if(!this.state.appSettings.connections.serverChecktime || checktime.isAfter(this.state.appSettings.connections.serverChecktime)){
+            this.state.appSettings.connections.serverChecktime = checktime;
+            if(this.state.appSettings.connections.serverDown != newVal) this.state.appSettings.connections.serverDown = newVal;
         }
     },
     setConnectionsOnCheckReturn(checktime){
         this.setUnsentReq(false, checktime);
-        if(this.state.connections.checkServer){
+        if(this.state.appSettings.connections.checkServer){
             this.setServerDown(false, checktime);
-            this.state.connections.checkServer = false;
+            this.state.appSettings.connections.checkServer = false;
         }
     },
     setConnectionsOnCheckFail(postData, checktime){
@@ -186,56 +155,41 @@ var store = {
         if(postData.readyState == 0) this.setUnsentReq(true, checktime);
         else{
             this.setUnsentReq(false, checktime);
-            if(this.state.connections.checkServer){
+            if(this.state.appSettings.connections.checkServer){
                 this.setServerDown(true, checktime);
-                this.state.connections.checkServer = false;
+                this.state.appSettings.connections.checkServer = false;
             }
         }
     },
-    /*setConnectionsOnWSReturn(checktime){
-        //if(this.sharedState.connections.unsentReq) this.setUnsentReq(false, checktime);   // only checkConnection sets unsentReq = false
-        if(this.sharedState.connections.serverDown) this.setServerDown(false, checktime);
-    },*/
     setConnectionsOnWSFail(postData, checktime){
         // readyState 0: unsent (no internet, netmotion connected)
-        if(postData.readyState == 0 && !this.state.connections.unsentReq) this.setUnsentReq(true, checktime);
+        if(postData.readyState == 0 && !this.state.appSettings.connections.unsentReq) this.setUnsentReq(true, checktime);
         // flag so next check connection will query server to confirm server is not down
-        else if(postData.readyState != 0) this.state.connections.checkServer = true;
+        else if(postData.readyState != 0) this.state.appSettings.connections.checkServer = true;
     },
-
-    switchNightView(){
-        this.state.nightView = !this.nightView;
-    },
-
-/* ADD TO LIVE */
-    setUser(payload){
-        var loadDate = null;
-        var token = null, email = null;
+    setUserOauth(payload){
+        var token = null, email = null, loadDate = null;
         if (payload.hasOwnProperty('token') && payload.token) token = payload.token;
         if(payload.hasOwnProperty('email') && payload.email) email = payload.email;
-        //if(payload.hasOwnProperty('firstName') && payload.firstName) firstName = payload.firstName;
-
         if(payload.hasOwnProperty('loadDate') && payload.loadDate) loadDate = payload.loadDate;
         else loadDate = moment();
 
         if(token || email){
             // compare, don't set is loading again if uneeded
-            if(!(this.state.user.token) || this.state.user.token != token){
-                this.state.user._isLoading.token = true;
-                this.state.user._isLoading.email = true;
-                this.state.user._isLoading.adAccount = true;
-                this.state.user._lastLoad.token = loadDate;
-                this.state.user.token = token;
-
-                if (this.debug) console.log("USER TOKEN SET: " + token);
-                this.state.user._isLoading.token = false;
+            if(!(this.state.appSettings.user.oauth.token.token) || this.state.appSettings.user.oauth.token.token != token){
+                this.state.appSettings.user.oauth.token.isLoading = true;
+                this.state.appSettings.user.oauth.email.isLoading = true;
+                this.state.appSettings.user.adAccount.isLoading = true;
+                this.state.appSettings.user.oauth.token.loadDate = loadDate;
+                this.state.appSettings.user.oauth.token.token = token;
+                this.state.appSettings.user.oauth.token.isLoading = false;
+                if(this.debug) console.log("USER TOKEN SET: " + token);
             }
-            if(!(this.state.user.email) || this.state.user.email != email){
-                this.state.user._lastLoad.email = loadDate;
-                this.state.user.email = email;
-
-                if (this.debug) console.log("USER EMAIL SET: " + email);
-                this.state.user._isLoading.email = false;
+            if(!(this.state.appSettings.user.oauth.email.email) || this.state.appSettings.user.oauth.email.email != email){
+                this.state.appSettings.user.oauth.email.loadDate = loadDate;
+                this.state.appSettings.user.oauth.email.email = email;
+                this.state.appSettings.user.oauth.email.isLoading = false;
+                if(this.debug) console.log("USER EMAIL SET: " + email);
             }
         }
     },
@@ -243,84 +197,90 @@ var store = {
         var fName = null, lName = null, accountName = null, inITS = false, loadDate = null;
         if(!loadDate) loadDate = moment();
 
+        this.state.appSettings.user.adAccount.isLoading = true;
+
         if(adData.length && adData.length == 1){
-            if(adData[0].hasOwnProperty('givenName') && adData[0].givenName && adData[0].hasOwnProperty('sn') && adData[0].sn && adData[0].hasOwnProperty('sAMAccountName') && adData[0].sAMAccountName && adData[0].hasOwnProperty('description') && adData[0].description){
-                this.state.user._lastLoad.adAccount = loadDate;
-
+            this.state.appSettings.user.adAccount.loadDate = loadDate;
+            if(adData[0].hasOwnProperty('givenName') && adData[0].givenName){
                 fName = adData[0].givenName;
-                lName = adData[0].sn;
-                accountName = adData[0].sAMAccountName;
-
-                if(!(this.state.user.firstName) || this.state.user.firstName != fName){
-                    this.state.user.firstName = fName;
+                if(!(this.state.appSettings.user.adAccount.firstName) || this.state.appSettings.user.adAccount.firstName != fName){
+                    this.state.appSettings.user.adAccount.firstName = fName;
                     if(this.debug) console.log("USER FIRST NAME SET: " + fName);
                 }
-                if(!(this.state.user.lastName) || this.state.user.lastName != lName){
-                    this.state.user.lastName = lName;
+            }
+            else this.state.appSettings.user.adAccount.firstName = null;
+
+            if(adData[0].hasOwnProperty('sn') && adData[0].sn){
+                lName = adData[0].sn;
+                if(!(this.state.appSettings.user.adAccount.lastName) || this.state.appSettings.user.adAccount.lastName != lName){
+                    this.state.appSettings.user.adAccount.lastName = lName;
                     if(this.debug) console.log("USER LAST NAME SET: " + lName);
                 }
-                if(!(this.state.user.username) || this.state.user.username != accountName){
-                    this.state.user.username = accountName;
-                }
+            }
+            else this.state.appSettings.user.adAccount.lastName = null;
 
+            if(adData[0].hasOwnProperty('sAMAccountName') && adData[0].sAMAccountName){
+                accountName = adData[0].sAMAccountName;
+                if(!(this.state.appSettings.user.adAccount.username) || this.state.appSettings.user.adAccount.username != accountName){
+                    this.state.appSettings.user.adAccount.username = accountName;
+                }
+            }
+            else this.state.appSettings.user.adAccount.username = null;
+
+            if(adData[0].hasOwnProperty('description') && adData[0].description){
                 if(adData[0].description == 'ITS'){
-                    this.state.user.inITS = true;
+                    this.state.appSettings.user.adAccount.inITS = true;
                     if(this.debug) console.log("USER IN ITS");
-                    this.state.datatables.settings.recordsList.wsProps.keepInactive = true;
                     this.setUserIsDev();
                 }
-                else this.state.user.inITS = false;
+                else this.state.appSettings.user.adAccount.inITS = false;
             }
-            else{
-                if(this.warnDebug) console.warn("WARNING: setUserADAccount:\t\tAll properties not returned");
-                this.state.user.firstName = null;
-                this.state.user.lastName = null;
-                this.state.user.username = null;
-                this.state.user.inITS = false;
-            }
+            else this.state.appSettings.user.adAccount.inITS = false;
         }
         else{
             if(this.errDebug && adData.length && adData.length > 1) console.error("ERROR: setUserADAccount:\t\tMore than one account returned");
             else if(this.errDebug) console.error("ERROR: setUserADAccount:\t\tNO DATA");
-            this.state.user._lastLoad.adAccount = loadDate;
-            this.state.user.firstName = null;
-            this.state.user.lastName = null;
-            this.state.user.username = null;
-            this.state.user.inITS = false;
+            this.state.appSettings.user.adAccount.firstName = null;
+            this.state.appSettings.user.adAccount.lastName = null;
+            this.state.appSettings.user.adAccount.username = null;
+            this.state.appSettings.user.adAccount.inITS = false;
         }
-        this.state.user._isLoading.adAccount = false;
+        this.state.appSettings.user.adAccount.isLoading = false;
     },
     setUserIsDev(){
         this.state.datatables.settings.formsList.wsProps.keepInactive = true;
         this.state.datatables.settings.recordsList.wsProps.keepInactive = true;
         this.state.datatables.settings.valSetsList.wsProps.keepInactive = true;
     },
-    getUserIsLoading(){
-        return this.state.user._isLoading.token || this.state.user._isLoading.email || this.state.user._isLoading.adAccount;
-    },
     getUserIsDev(){
-        if(!this.state.user._isLoading.adAccount) return this.state.user.inITS;
+        if(!this.state.appSettings.user.adAccount.isLoading) return this.state.appSettings.user.adAccount.inITS;
     },
     getUsername(){
-        if(!this.state.user._isLoading.adAccount) return this.state.user.username;
+        if(!this.state.appSettings.user.adAccount.isLoading) return this.state.appSettings.user.adAccount.username;
     },
     getUserEmail(){
-        if(!this.state.user._isLoading.email) return this.state.user.email;
+        if(!this.state.appSettings.user.oauth.email.isLoading && this.state.appSettings.user.oauth.email.email){
+            return this.state.appSettings.user.oauth.email.email
+        }
     },
-    getUserEmailShort(){
+    getUserShortEmail(){
         var email;
-        if(!this.state.user._isLoading.email && this.state.user.email){
-            email = this.state.user.email;
+        if(!this.state.appSettings.user.oauth.email.isLoading && this.state.appSettings.user.oauth.email.email){
+            email = this.state.appSettings.user.oauth.email.email
             return email.substring(0, email.indexOf('@'));
         }
     },
-    getUserFirstName(){
-        if(!this.state.user._isLoading.adAccount) return this.state.user.firstName;
-    },
-
 
 /* ISLOADING + LOAD DATE */
 
+    getIsLoading(payload){
+        var route = null;
+        var stateName = null;
+        var storeName = null;
+        if(payload.hasOwnProperty('storeName')) storeName = payload.storeName;
+            if(payload.hasOwnProperty('stateName')) stateName = payload.stateName;
+            else if(payload.has)
+    },
     setLastChange(changetime){
         if(!this.state.lastChange || changetime.isAfter(this.state.lastChange)) this.state.lastChange = changetime;
     },
@@ -419,29 +379,22 @@ var store = {
         var tableSettings = this.getTableSettings(payload);
         if(tableSettings){
             returnVal = true;
-
+            if(payload.hasOwnProperty('searchStr')) tableSettings.searchStr = payload.searchStr;
+            if(payload.hasOwnProperty('sortBy')) tableSettings.sortBy = payload.sortBy;
+            if(payload.hasOwnProperty('sortDesc')) tableSettings.sortDesc = payload.sortDesc;
             if(payload.hasOwnProperty('showInactive')) tableSettings.showInactive = payload.showInactive;
             if(payload.hasOwnProperty('showDetails')) tableSettings.showDetails = payload.showDetails;
             if(payload.hasOwnProperty('showIDCol')) tableSettings.showIDCol = payload.showIDCol;
             if(payload.hasOwnProperty('showColFilters')) tableSettings.showColFilters = payload.showColFilters;
             if(payload.hasOwnProperty('perPage')) tableSettings.perPage = payload.perPage;
 
-            // param specific
-            if(payload.hasOwnProperty('searchStr') || payload.hasOwnProperty('sortBy') || payload.hasOwnProperty('sortDesc')){
-                if(payload.hasOwnProperty('formID')){
-                    if(tableSettings.hasOwnProperty('formID')){
-                        tableSettings.formID = payload.formID;
-                        if(payload.hasOwnProperty('searchStr')) tableSettings.searchStr = payload.searchStr;
-                        if(payload.hasOwnProperty('sortBy')) tableSettings.sortBy = payload.sortBy;
-                        if(payload.hasOwnProperty('sortDesc')) tableSettings.sortDesc = payload.sortDesc;
-                    }
-                    else if(this.errDebug) console.error("ERROR: setTableSettings:\t\tpayload has formID by no formID on store settings:" + this.payloadToStr(payload));
-                }
-            }
-
             if(payload.hasOwnProperty('deptID')){
                 if(tableSettings.hasOwnProperty('deptID')) tableSettings.deptID = payload.deptID;
                 else if(this.errDebug) console.error("ERROR: setTableSettings:\t\tpayload has deptID by no deptID on store settings:" + this.payloadToStr(payload));
+            }
+            if(payload.hasOwnProperty('formID')){
+                if(tableSettings.hasOwnProperty('formID')) tableSettings.formID = payload.formID;
+                else if(this.errDebug) console.error("ERROR: setTableSettings:\t\tpayload has formID by no formID on store settings:" + this.payloadToStr(payload));
             }
             
             if(payload.hasOwnProperty('wsProps') && payload.wsProps) this.setWSProps(payload);
@@ -461,10 +414,8 @@ var store = {
     setWSProps: function(payload){
         var returnVal = false;
         //if (payload.hasOwnProperty('stateName') && payload.stateName) stateName = payload.stateName;
-        if(this.debug) console.log('setWSProps')
 
         var wsProps = this.getWSProps(payload);
-        if(this.debug) console.log(wsProps)
         if(wsProps){
             returnVal = true;
             if (payload.hasOwnProperty('count')) wsProps.count = payload.count;
@@ -480,23 +431,8 @@ var store = {
                 else if(this.errDebug) console.error("ERROR: setWSProps:\t\tpayload has formID by no formID on store wsProps:" + this.payloadToStr(payload));
             }
         }
+        else if (this.errDebug) console.error("ERROR: setWSProps:\t\tpayload - storename - " + this.payloadToStr(payload));
         return returnVal;
-    },
-
-    setReturnFormID(formID){
-        if(this.debug) console.log('setReturnFormID')
-        this.state.datatables.recordsList_formID = formID;
-    },
-    getStoreHasData(payload){
-        var stateName = 'datatables', storeName = null
-        if(payload.hasOwnProperty('storeName')) storeName = payload.storeName;
-        if(storeName == 'recordsList'){
-            var wsProps = this.getWSProps(payload);
-            if(wsProps){
-                return (this.state[stateName].settings[storeName].wsProps.formID == this.state[stateName].recordsList_formID); 
-            }
-        }
-        else return true;
     },
 
 /* STORE/DATA OBJ(S) - GETS */

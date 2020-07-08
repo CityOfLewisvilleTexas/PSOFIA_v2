@@ -5,11 +5,13 @@ const eventHub = new Vue();
 var app = new Vue({
     el: "#app",
     data: {
+		useremail: '',
         username: '',
         hello: 'Hello!',
         isLoading: true,
         isSubmitting: false,
         editing: false,
+		showInvalid: false,
 		
 		formID: '',
 		recordNum: '',
@@ -102,6 +104,8 @@ var app = new Vue({
 				app.data.Record = data.Record;
 				
 				app.data.Fields.forEach(function(field){
+					// testing
+					field.Required = true;
 					Vue.set(field, 'updateDB', false);
 					if(app.data.Record && app.data.Record.length > 0){
 						
@@ -289,17 +293,31 @@ var app = new Vue({
 
 		// get username from COL if it exists
         checkForUsername: function() {
-
+			this.useremail = localStorage.colEmail;
             // ajax
             $.get('https://query.cityoflewisville.com/ActiveDirectory/getUserByEmail/' + localStorage.colEmail, function(data) {
 
-                // set username, set hello message (above form)
-                app.username = (data.length) ? data[0].givenName : ''
-                app.hello = (app.username) ? 'Hello, ' + app.username + '!' : 'Hello!'
+                // set username
+                app.username = (data.length) ? data[0].givenName : '';
 
-                // warning message
-                if (!app.username) alert('Could not verify identity. Form may not submit correctly.')
+                Vue.nextTick(function(){
+                	// set hello message to username (above form)
+					if(app.username){
+	                	app.hello = 'Hello, ' + app.username + '!';
+	                }
+	                // set hello message to useremail (above form); warning toast
+	                else if (app.useremail){
+	                	Materialize.toast('No username found for ' + app.useremail, 5000, 'rounded');
+	                	app.hello = 'Hello, ' + app.useremail + '!'
+	                }
+	                // warning message
+	                else{
+	                	alert('Could not verify identity. Form may not submit correctly.')
+	                	app.hello = 'Hello!'
+	                }
 
+				});
+          		
                 // check for record number
                 //app.fetchRecord()
             })
@@ -335,6 +353,24 @@ var app = new Vue({
 				else{
 					f.updateDB = true;
 				}
+
+				if(f.Required && payload.val == ''){
+					console.log('required');
+					if(f.FieldType != 'SELECT'){
+						$('#' + f.FieldHTMLID).addClass('needs-value');
+					}
+					else{
+						$('#' + f.FieldHTMLID).siblings().filter(':text').addClass('needs-value');
+					}
+				}
+				else if(f.Required && payload.val != ''){
+					if(f.FieldType != 'SELECT'){
+						$('#' + f.FieldHTMLID).removeClass('needs-value');
+					}
+					else{
+						$('#' + f.FieldHTMLID).siblings().filter(':text').removeClass('needs-value');
+					}
+				}
 			}
 			else{
 				console.log('ERROR');
@@ -345,22 +381,38 @@ var app = new Vue({
         submitForm: function() {
 			console.log("submitform");
 			
+			if (this.newFormValues.length == 0){
+				Materialize.toast('Data has already been saved', 5000, 'rounded')
+			}
 			// required fields
-			if(!this.valuesInRequiredFields){
+			else if(!this.valuesInRequiredFields){
 				//Hightlight required fields
+				this.requiredFields.forEach(function(field){
+					if(field.FieldType != 'CHECKBOX' && field.Required && field.fieldVal == ''){
+						console.log(field.FieldHTMLID);
+						if(field.FieldType != 'SELECT'){
+							$('#' + field.FieldHTMLID).addClass('needs-value');
+						}
+						else{
+							$('#' + field.FieldHTMLID).siblings().filter(':text').addClass('needs-value');
+						}
+					}
+				});
+
+				Materialize.toast('Please fill in the requied fields before submitting the form', 5000, 'rounded')
 			}
 			// error verifying identity
-			else if (!app.username){
+			/*else if (!app.username){
 				// return
-			}
-			else{
+			}*/
+			else if (this.newFormValues.length > 0){
 
 				var psofiaData = JSON.stringify(this.newFormValues);
 
 				// one last error check
 				if (!psofiaData)
 				{
-					return
+					return;
 				}
 
 				// "send off" the form, scroll to top, change the message
@@ -405,11 +457,11 @@ var app = new Vue({
 							app.getFormEntry();
 						}
 						// fail
-						else if (data.Message[0].RecordNumber){
-							alert('record Number issue');
+						else if (data.Message[0].RecordNumber && (data.Message[0].SubmitOption == 3 || data.Message[0].SubmitOption == 4)){
+							Materialize.toast('Error! ' + data.Message[0].SubmitMessage, 5000, 'rounded')
 						}
 						else{
-							alert('Something may have gone wrong')
+							alert('Something may have gone wrong. ')
 						}
 					})
 					.fail(function(data){

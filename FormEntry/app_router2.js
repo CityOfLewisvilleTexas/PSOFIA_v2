@@ -4,84 +4,203 @@ const eventHub = new Vue();
 
 var Home = {
     template: `
-        <v-layout row wrap>
-            <v-flex xs12>
-                <v-card>
-                    <v-card-title primary-title>All Forms</v-card-title>
-                    <v-card-actions>
+        <v-card>
+            <v-card-title>
+                All Forms
+                <v-spacer></v-spacer>
+                <v-text-field
+                    v-model="searchStr"
+                    append-icon="mdi-magnify"
+                    label="Search Forms"
+                    single-line
+                    hide-details
+                >
+                </v-text-field>
+            </v-card-title>
+            <v-data-table
+                :headers="headerCols"
+                :items="orderedForms"
+                :loading="appLoading"
+                :server-items-length="totalForms"
+                hide-default-header
+                hide-default-footer
+                item-key="FormID.val"
+                class="elevation-1"
+            >   
+                <template v-slot:header="{props:{headers}}">
+                    <thead>
+                        <tr>
+                            <th v-for="col in headerCols" :key="col.FormID" :class="getCellAlign(col)"
+                                role="columnheader" aria-sort="ascending" class="sortable active asc">
+                                {{ col.Label }}
+                            </th>
+                            <th>View Records</th>
+                        </tr>
+                    </thead>
+                </template>
+                <template v-slot:body="{items}">
+                    <tbody>
+                        <tr v-for="item in items" :key="item.ID">
+                            <td v-for="col in headerCols" :key="col.FormID"
+                                :class="getCellAlign(col)">
+                                <template v-if="col.HasTooltip">
+                                    <v-tooltip bottom>
+                                        <template v-slot:activator="{ on }">
+                                            <span v-on="on">{{ item[col.ColumnName].displayVal }}</span>
+                                        </template>
+                                        <span v-html="getTooltip(col.ColumnName, item)"></span>
+                                    </v-tooltip>
+                                </template>
+                                <template v-else>
+                                    {{ item[col.ColumnName].displayVal }}
+                                </template>
+                            </td>
+                            <td class="text-xs-center"><v-btn icon small :to="getRouteLink(item.FormID.val)">
+                                <v-icon>mdi-view-list</v-icon>
+                            </v-btn></td>
+                        </tr>
+                    </tbody>
+                </template>
+                <template v-slot:loading">
+                    Loading All Forms
+                </template>
+                <template v-slot:no-data">
+                    NO DATA
+                </template>
+                <template v-slot:no-results">
+                    NO RESULTS
+                </template>
+            </v-data-table>
+        </v-card>
+    `,
+    /*
+                        <v-card-actions>
                         <v-btn @click="showSearch = true">
                             <!--<v-icon dark>mdi-add_box</v-icon>-->
                             Search Forms
                         </v-btn>
                     </v-card-actions>
-                </v-card>
-            </v-flex>
-            <v-flex xs12>
-                <v-data-table
-                    :headers="formHeaders"
-                    :items="orderedForms"
-                    item-key="FormID.val"
-                    :total-items="totalForms"
-                    class="elevation-1"
-                    hide-actions
-                >
-                    <template slot="items" slot-scope="props">
-                        <td class="text-xs-right">{{props.item.FormID.displayVal}}</td>
-                        <td class="text-xs-left"><v-tooltip bottom>
-                            <span slot="activator">{{props.item.FormName}}</span>
-                            <span>SQL Table Name: {{props.item.TableName}}</span>
-                        </v-tooltip></td>
-                        <td class="text-xs-center"><v-tooltip bottom>
-                            <span slot="activator">{{props.item.Department}}</span>
-                            <span>Department ID: {{props.item.DepartmentID}}</span>
-                        </v-tooltip></td>
-                        <td class="text-xs-center"><v-tooltip bottom>
-                            <span slot="activator">{{props.item.CreateDate.displayVal}}</span>
-                            <span>{{props.item.CreateUser}} - {{getFullDateDisplay(props.item.CreateDate)}}</span>
-                        </v-tooltip></td>
-                        <td class="text-xs-center"><v-tooltip bottom>
-                            <span slot="activator">{{props.item.LastEditDate.displayVal}}</span>
-                            <span>{{props.item.LastEditUser}} - {{getFullDateDisplay(props.item.LastEditDate)}}</span>
-                        </v-tooltip></td>
-                        <td class="text-xs-center"><v-tooltip v-if="props.item.ViewFormAddress" bottom>
-                            <v-btn flat small slot="activator">Link</v-btn>
-                            <span>{{props.item.ViewFormAddress}}</span>
-                        </v-tooltip></td>
-                        <td class="text-xs-center"><v-btn icon small :to="getRouteLink(props.item.FormID.val)">
-                            <v-icon>pageview</v-icon>
-                        </v-btn></td>
-                    </template>
-                </v-data-table>
-            </v-flex>
-        </v-layout>
-    `,
+    */
+    /*
+    <v-btn icon small flat @click="changeSort(col.ColumnName)" size="14px">
+                                    <v-icon size="14px">arrow_upward</v-icon>
+                                </v-btn>
+    :class="['column sortable', pagination.descending ? 'desc' : 'asc', col.ColumnName === pagination.sortBy ? 'active' : '']"
+    @click="changeSort(col.ColumnName)"
+    <v-icon small>arrow_upward</v-icon>
+    <template v-if="col.HasTooltip">
+                                <v-tooltip bottom>
+                                    <span slot="activator">{{ props.item[col.ColumnName].displayVal }}</span>
+                                    <span v-html="getTooltip(col.ColumnName, props.item)"></span>
+                                </v-tooltip>
+                            </template>*/
+/*
+            <td class="text-xs-center">
+                <v-tooltip v-if="props.item.ViewFormAddress" bottom>
+                    <v-btn flat small slot="activator">Link</v-btn>
+                    <span>{{props.item.ViewFormAddress}}</span>
+                </v-tooltip>
+            </td>
+*/
     data: function(){
         return{
             isLoading: true,
-            sharedState: store.state.database,
-            storeLoading: store.state.database.isLoading,
-            formHeaders: [
-                {text: 'ID', value:'FormID.val', sortable: false, searchable: true, align: 'center'},
-                {text: 'Name', value:'FormName', sortable: false, searchable: true, align: 'center'},
-                {text: 'Department', value:'Department', sortable: false, searchable: true, align: 'center'},
-                {text: 'Created', value:'CreateDate.val', sortable: false, searchable: true, align: 'center'},
-                {text: 'Last Edited', value:'LastEditDate.val', sortable: false, searchable: true, align: 'center'},
-                {text: 'View', value:'ViewFormAddress', sortable: false, align: 'center'},
-                {text: 'View Records', sortable: false, align: 'center'}
-            ],
+            sharedState: store.state,
+            tableSort: {
+                sortBy: '',
+                sortDesc: '',
+            },
+            filterTable:{
+                formID: '',
+                formName: '',
+                department: '',
+                dateCreated1: '',
+                dateCreated2: '',
+                dateEdited1: '',
+                dateEdited2: '',
+                
+            },
+            searchStr: '',
             debug: true,
         }
     },
     computed: {
-        orderedForms: function(){
-            return store.getForms_Ordered('database');
+        stateLoading: function(){
+            return this.sharedState.isLoading;
+        },
+        dbLoading: function(){
+            return this.sharedState.database.isLoading;
+        },
+        colsLoading: function(){
+            return this.sharedState.columns.isLoading;
+        },
+        storeLoading: function(){
+            return this.stateLoading || this.dbLoading || this.colsLoading;
+        },
+        appLoading: function(){
+            return this.storeLoading || this.isLoading;
+        },
+        sharedDB: function(){
+            return this.sharedState.database;
+        },
+        sharedCols: function(){
+            return this.sharedState.columns;
         },
         totalForms: function(){
             return store.countForms('database');
         },
+        orderedForms: function(){
+            return store.getForms_Ordered('database');
+        },
+        sortedForms: function(){
+            return this.orderedForms.sort(function(a,b){
+                return true;
+            });
+        },
         headerCols: function(){
-            return store.getColumns_Headers('allForms');  
-        }
+            return store.getColumns_Headers('allforms');  
+        },
+        headerCols_Sort: function(){
+            var self = this;
+            var cols = this.headerCols.map(function(column){
+                return {
+                    text: column.Label,
+                    value: column.ColumnName,
+                    align: self.getCellAlign(column),
+                    sortable: true
+                }
+            }); 
+            cols.push({
+                text: 'View Records',
+                value: 'View Records',
+                sortable: false
+            })
+            return cols;
+            /*return this.headerCols.map(function(column){
+                return {
+                    ColumnName: column.ColumnName,
+                    SortByIndex: null,
+                    SortBy: null,
+                    SearchStr: null
+                }
+            });*/
+        },
+        tableItems: function(){
+            /*return this.orderForms.sortBy(funciton(forms){
+
+            });*/
+        },
+        /*formHeaders: function(){
+            var headers = [];
+            var headerVal;
+            if(this.headerCols){
+                this.headerCols.forEach(function(c){
+                    headerVal = c.ColumnName.toString() + '.val';
+                    headers.push({text: c.Label, align: center, value: headerVal});
+                });
+            }
+            return headers;
+        }*/
     },
     created: function(){
         this.initialize();
@@ -116,6 +235,7 @@ var Home = {
 
         },
         getForms: function(){
+            var self = this;
             this.isLoading = true;
             $.post('https://query.cityoflewisville.com/v2/',{
                 webservice : 'PSOFIAv2/Get All Forms2'
@@ -129,6 +249,29 @@ var Home = {
                 console.log('Webservice Fail: Get All Forms2');
                 self.isLoading = false;
             });
+        },
+        getTooltip: function(colName, form){
+            if(colName === 'FormName'){
+                return 'SQL Table Name: ' + form.TableName.displayVal;
+            }
+            if(colName === 'Department'){
+                return 'Department ID: ' + form.DepartmentID.displayVal;
+            }
+            if(colName === 'CreateDate'){
+                return form.CreateUser.displayVal + ' - ' + this.getFullDateDisplay(form.CreateDate);
+            }
+            if(colName === 'LastEditDate'){
+                return form.LastEditUser.displayVal + ' - ' + this.getFullDateDisplay(form.LastEditDate);
+            }
+        },
+        getCellAlign: function(col){
+            if(col.ColumnName === 'FormID'){
+                return 'text-xs-right';
+            }
+            else if(col.ColumnName === 'FormName'){
+                return 'text-xs-left';
+            }
+            else return 'text-xs-center';
         },
         getRouteLink: function(_formID){
             return '/form/' + _formID.toString();
@@ -676,11 +819,28 @@ var router = new VueRouter({
 var app = new Vue({
     router: router,
     el: '#app',
+    vuetify: new Vuetify({
+        theme: {
+            themes: {
+                light: {
+                    primary: '#5A348D',
+                    secondary: '#FFCDD2',
+                    accent: '#3F51B5',
+                },
+                dark: {
+                    primary: '#5A348D',
+                    secondary: '#FFCDD2',
+                    accent: '#3F51B5',
+                }
+            },
+        },
+    }),
     data:{
         isLoading: false,
         username: '',
         prevPath: null,
     },
+
     computed:{
         userEmail: function(){
             return localStorage.colEmail;
@@ -689,10 +849,12 @@ var app = new Vue({
             return (app.username) ? 'Hello, ' + app.username + '!' : 'Hello!'
         }
     },
+
     created: function(){
         this.checkForUsername();
          // start the app once the DOM is rendered
     },
+
     watch: {
         // call again the method if the route changes
         '$route': function(to, from){
@@ -700,6 +862,7 @@ var app = new Vue({
             this.routeChanged();
         }
     },
+
     methods: {
         // get username from COL if it exists
         checkForUsername: function() {

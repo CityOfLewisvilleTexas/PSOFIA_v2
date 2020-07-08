@@ -1,82 +1,84 @@
 <!DOCTYPE html>
 <html>
 <head>
+
+    <script>
+        if (window.location.host === 'apps') window.location = 'http://apps.cityoflewisville.com' + window.location.pathname + window.location.search + window.location.hash;
+    </script>
+
     <meta charset="utf-8" />
-    <title>PSOFIAv2 Form Builder</title>
+    <title>PSOFIAv2</title>
     <!-- force no compatibility mode in IE -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <!-- google fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Product+Sans:400,400i,700,700i" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- styles -->
-    <!--<link rel="stylesheet" type="text/css" href="style.css" media="screen" />-->
-    <!--<link rel="stylesheet" title="styles" href="materialize/css/materialize.min.css">-->
-    <link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">
-
-    <!-- Vue -->
-    <script src="https://unpkg.com/vue/dist/vue.js"></script>
-    <!-- Vue Router -->
-    <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
-    <!--VueX -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vuex/3.0.1/vuex.min.js"></script>
-    <!-- Vuetify -->
-    <script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+    <!-- FONTS -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <!-- ICONS -->
+    <!--<link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">-->
+    <link href="https://cdn.materialdesignicons.com/5.3.45/css/materialdesignicons.min.css" rel="stylesheet">
+    <!-- STYLES -->
+        <!-- Vuetify -->
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <link href="style2.css" rel="stylesheet">
+    <!-- mobile friendly -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <!-- SCRIPTS -->
+    <!--   DEBUG   -->
+        <!-- Vue, Vue Router, Vuetify -->
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+        <script src="https://unpkg.com/vue-router/dist/vue-router.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.js"></script>
+    <!--   PRODUCTION   -->
+        <!-- Vue, Vue Router, Vuetify -->
+        <!--
+        <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
+        <script src="https://unpkg.com/vue-router@3.3.4/dist/vue-router.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vuetify@2.3.2/dist/vuetify.min.js"></script>
+        -->
     <!-- axios -->
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <!-- JQuery -->
+        <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+    <!-- jQuery -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-	<!-- moment -->
-	<script type="text/javascript" src="../moment/moment.js"></script>
-    <!-- my script - moment date formatting -->
+	<!-- moment (copied) -->
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js"></script>
+    <!-- moment date formatting -->
     <script type="text/javascript" src="../scripts/dateFormatting.js"></script>
-    <!-- my script - data functions / get val from sql value + formatting -->
+    <!-- data functions / get val from sql value + formatting -->
     <script type="text/javascript" src="../scripts/dataFunctions.js"></script>
-    <!-- my script - Store -->
+    <!-- store -->
     <script type="text/javascript" src="../scripts/storeA.js"></script>
     <!-- polyfills - Object.assign -->
     <script type="text/javascript" src="../scripts/polyfills.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.js"></script>
-    <!-- materialize -->
-    <!--<script src="materialize/js/materialize.js"></script>-->
     <!-- city oauth -->
-    <script src="http://apps.cityoflewisville.com/COLSecurity/col_security.js"></script>
-	
-    <!-- mobile friendly -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <script src="../components/psofia-form-data.js"></script>
-    <script src="../components/psofia-form-section.js"></script>
-
-    <script src="../components/psofia-text.js"></script>
-    <script src="../components/psofia-number.js"></script>
-    <script src="../components/psofia-checkbox.js"></script>
-    <script src="../components/psofia-autocomplete.js"></script>
-    <script src="../components/psofia-combobox.js"></script>
-
+        <!--<script src="http://apps.cityoflewisville.com/COLSecurity/col_security.js"></script>-->
+    <!-- COMPONENTS -->
+    <!-- list -->
+    <script src="../components/psofia-webservice-settings.js"></script>
+    <script src="../components/psofia-delete-restore.js"></script>
+    <script src="../components/psofia-table-settings.js"></script>
+    <!-- builder -->
+    <script src="../components/psofia-builder-form-data.js"></script>
+    <script src="../components/psofia-builder-section.js"></script>
     <script src="../components/psofia-dept-dialog.js"></script>
-
     <script src="../components/psofia-fields-table.js"></script>
     <script src="../components/psofia-field-dialog.js"></script>
+    <!-- inputs types -->
+    <script src="../components/psofia-input.js"></script>
+    <script src="../components/psofia-text.js"></script>
+    <script src="../components/psofia-text-area.js"></script>
+    <script src="../components/psofia-number.js"></script>
+    <script src="../components/psofia-checkbox.js"></script>
+        <!--<script src="../components/psofia-inline.js"></script>-->
+    <script src="../components/psofia-combobox.js"></script>
+        <!--<script src="../components/psofia-autocomplete.js"></script>-->
 
 </head>
 
 <body>
-    <div id="app" v-cloak>
-    <v-app>
-        <!-- colored toolbar -->
-        <v-toolbar app dense flat dark color="indigo">
-            <v-toolbar-title>PSOFIAv2 Form Builder</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-toolbar-title>{{userEmail}}</v-toolbar-title>
-        </v-toolbar>
-        <v-content>
-            <v-container fluid>
-                <router-view></router-view>
-            </v-container>
-        </v-content>
+    <v-app id="app">
+        <router-view></router-view>
     </v-app>
-    </div>
 
     <!-- source code -->
     <script type="text/javascript" src="app_router2.js"></script>

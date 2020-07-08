@@ -146,7 +146,7 @@ var MainNav = {
     data: function(){
         return{
             isLoading: false,
-            sharedState: store.state,
+            sharedSettings: store.state.appSettings,
             prevPath: null,
             currPath: null,
             accountMenu: false,
@@ -392,7 +392,7 @@ var Main = {
     data: function(){
         return{
             isLoading: false,
-            sharedState: store.state,
+            sharedState: store.state.appSettings,
             prevPath: null,
             currPath: null,
             userFname: '',
@@ -716,7 +716,7 @@ var List = {
     data: function(){
         return{
             isLoading: true,
-            sharedState: store.state,
+            sharedState: store.state.list,
             
             storeName: null,
             params:{

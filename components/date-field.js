@@ -30,8 +30,15 @@ Vue.component('date-field', {
 	},
 	methods:{
 		updateValue: function (value) {
-			var dateVal = new Date(value)
-            var formattedVal = moment(dateVal).format('YYYY-MM-DD')
+			var dateVal;
+			var formattedVal;
+			if(value != ''){
+				dateVal = new Date(value);
+            	formattedVal = moment(dateVal).format('YYYY-MM-DD');
+            }
+            else{
+            	formattedVal = '';
+            }
 			// Emit the value through the hub (to top level)
 			//eventHub.$emit('update-input', {fieldID: this.field.FormFieldID, val: Number(formattedValue)});
 			eventHub.$emit('update-input', {fieldID: this.field.FormFieldID, htmlID: this.field.FieldHTMLID, val: formattedVal});

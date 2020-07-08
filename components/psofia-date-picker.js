@@ -1,45 +1,30 @@
-Vue.component('builder-date-picker-v', {
+Vue.component('psofia-date-picker', {
     // declare the props
     props: {
-        field:{
-            type: Object,
+        
+        stateName:{ 
+            type: String,
+            required: false,
+            default: 'form'
+        },
+        storeName:{ // formData, sections, subSections, fields, etc
+            type: String,
             required: true
         },
-        origField:{
-            type: Object,
+        storeId:{   // formFieldID, formSectionID, formSubSectionID, etc
+            type: Number,
             required: false
         },
         valPropname:{
             type: String,
-            default: 'value',
-            required: false
+            required: true
         },
-        idText:{
-            type: String,
-            required: false
-        },
-        idNum:{
-            type: Number,
-            required: false,
-        },
-        idPropname:{
-            type: String,
-            required: false
-        },
-        concatID:{
+        inputDisabled:{
             type: Boolean,
             required: false,
             default: false
         },
-        labelText:{
-            type: String,
-            required: false
-        },
-        labelPropname:{
-            type: String,
-            required: false
-        },
-        inputDisabled:{
+        allowRange:{
             type: Boolean,
             required: false,
             default: false
@@ -49,207 +34,274 @@ Vue.component('builder-date-picker-v', {
             required: false,
             default: true
         },
-        dataPortion:{
-            type: String,
-            required: false
+        parentShowInactive:{
+            type: Boolean,
+            required: false,
+            default: false
         },
-        allowRange:{
+        isDarkMode:{
             type: Boolean,
             required: false,
             default: false
         }
     },
     template: `
-        <div>
-        <v-text-field
-            :id="inputID"
-            :ref="inputID"
-            \
-            v-model="inputValFormatted"
-            @blur="updateFormatted"
-            @change="changeValue"
-            @update:error="updateErr"
-            \
-            :label="inputLabel"
-            :background-color="inputColor"
-            :disabled="inputDisabled"
-            :clearable="inputClearable"
-            @click:clear="clearInput"
-            @click:prepend="menuVal = true"
-            @focus="selectAll"
-            @click.right="logValue"
-            \
-            hint="MM/DD/YYYY format"
-            persistent-hint
-            :messages="msg"\
-            :rules="[]"\
-            \
-            prepend-icon="event"
-        ></v-text-field>
-        \
-        <v-menu
-            :id="menuID"
-            :ref="menuID"
-            v-model="menuVal"
-            \
-            :activator="inputSelectorStr"
-            :close-on-content-click="false"
-            :return-value.sync="pickerVal"
-            lazy
-            transition="scale-transition"
-            offset-y
-            full-width
-            min-width="290px"
-        >
-            <v-date-picker
-                v-model="pickerVal"
-                v-on:input="savePicker"
-                no-title
-                scrollable
+        <span>
+            <v-menu v-if="!allowRange"
+                :id="menuID" :ref="menuID"
+                
+                v-model="showMenu"
+                
+                :close-on-content-click="false"
+                transition="scale-transition"
+                offset-y
+                max-width="290px"
+                min-width="290px"
             >
-                <v-spacer></v-spacer>
-            </v-date-picker>
-        </v-menu>
-        </div>
+                <template v-slot:activator="{ on, attrs }">
+                    <v-text-field
+                        :id="inputID" :ref="inputID"
+                        
+                        v-model="inputValFormatted"
+                        v-bind="attrs"
+                        @blur="updateFormatted"
+                        @change="changeValue"
+                        @update:error="updateErr"
+                        
+                        :label="inputLabel"
+                        :hint="inputDesc"
+                        :persistent-hint="hasHint"
+                        :disabled="inputDisabled"
+                        :clearable="inputClearable"
+
+                        @click:clear="clearInput"
+                        @focus="selectAll"
+                        @click.right="logValue"
+                            v-on="on"
+
+                        :messages="msg"
+                        :success="wasChanged"
+
+                        :rules="[]"
+                        :error="hasError"
+
+                        prepend-icon="event"
+                        :background-color="inputColor"
+                    ></v-text-field>
+                </template>
+
+                <v-date-picker
+                    :id="pickerID" :ref="pickerID"
+
+                    v-model="pickerVal"
+                    @input="setPicker"
+
+                    :multiple="false"
+                    :range="allowRange"
+                    :disabled="inputDisabled"
+
+                    no-title
+                    scrollable
+                    picker-date="2020/05"
+                    color="secondary"
+                    header-color="primary"
+                    :dark="isDarkMode"
+                    :day-format="null" :header-date-format="null" :month-format="null" :title-date-format="null" :weekday-format="null"
+                >
+                    <v-spacer></v-spacer>
+                </v-date-picker>
+            </v-menu>
+
+            <v-dialog v-if="allowRange"
+                :id="menuID" :ref="menuID"
+                v-model="showMenu"
+                :return-value.sync="pickerVal"
+                persistent
+                width="290px"
+            >
+                <template v-slot:activator="{ on, attrs }">
+                    <v-text-field
+                        v-model="inputValFormatted"
+                        label="Historical Search"
+                        v-bind="attrs"
+                        v-on="on"
+                        readonly
+                    ></v-text-field>
+                </template>
+                <v-card>
+                    <v-card-text>
+                        <v-btn text color="primary" @click.stop.prevent="switchPickerType">Range</v-btn>
+                    </v-card-text>
+                    <v-date-picker
+                        v-model="pickerVal"
+                        scrollable
+                    >
+                        <v-spacer></v-spacer>
+                        <v-btn text color="primary" @click="historicalSearch.show = false">Cancel</v-btn>
+                        <v-btn text color="primary" @click="$refs.historicalSearch_dialog.save(historicalSearch[historicalSearch.type])">OK</v-btn>
+                    </v-date-picker>
+                    <v-date-picker
+                        v-model="pickerRange"
+                        range
+                        scrollable
+                    >
+                        <v-spacer></v-spacer>
+                        <v-btn text color="primary" @click="historicalSearch.show = false">Cancel</v-btn>
+                        <v-btn text color="primary" @click="$refs.historicalSearch_dialog.save(historicalSearch[historicalSearch.type])">OK</v-btn>
+                    </v-date-picker>
+                </v-card>
+            </v-dialog>
+        </span>
     `,
-    //                <!--title-date-format="pickerTitle"
-//                :multiple="allowRange"-->
-//                <v-btn flat color="primary" @click="menuVal = false">Cancel</v-btn>
-    //            <v-btn flat color="primary" @click="savePicker">OK</v-btn>
+
+//MENU
+//:return-value.sync="pickerVal"
+//lazy
+//TEXT INPUT
+//@click:prepend="showMenu = true"
+//            <!--title-date-format="pickerTitle"
+//              :multiple="allowRange"-->
+//            <v-btn flat color="primary" @click="showMenu = false">Cancel</v-btn>
+//            <v-btn flat color="primary" @click="savePicker">OK</v-btn>
     data: function(){
         return{
-            //_field: this.field,
-            //_origField: this.origField,
-            menuVal: false,
+            isLoading: true,
+            sharedState: store.state,
+            inputValObj: '',    //
+            inputVal: '',       //includes properties that are val objects: 1 from allSections (sectionID, sectionTitle, sectionDesc)
+            showMenu: false,
             inputValFormatted: null,
-            momentDate: null,
-            valNotes: '',
+            pickerVal: null,
+            pickerRange: [],
+
             hasError: false,
-            errMsg: ''
+            errMsg: '',
+            debug: true,
         }
     },
     created: function(){
     },
     mounted: function(){
+        var self = this;
+        Vue.nextTick(function(){
+            self.initialize();
+        });
     },
     watch:{
-        inputVal: {
-            handler(newVal, oldVal){
-                var self = this;
-                if(newVal){
-                    this.momentDate = moment(newVal);
-                    this.inputValFormatted = this.momentDate.format('MM/DD/YY');
+        valObj: {
+            handler: function(val, prev){
+                if(val){
+                    if(this.debug) console.log('watch field obj - reload input');
+                    this.loadInput();
                 }
-                else{
-                    this.momentDate = null;
-                    this.inputValFormatted = null;
-                }
-            }, deep: true
-        }
+            },
+            deep: true
+        },
     },
     computed:{
-        inputID: function(){
-            var self = this;
+        stateLoading: function(){ return this.sharedState.isLoading; },
+        colsLoading: function(){ return this.sharedState.columns.isLoading; },
+        formLoading: function(){ return this.sharedState.form.isLoading; },
+        dbLoading: function(){ return this.sharedState.database.isLoading; },
+        storeLoading: function(){
+            return this.stateLoading || this.formLoading || this.dbLoading || this.colsLoading;
+        },
+        appLoading: function(){
+            return this.storeLoading || this.isLoading;
+        },
 
-            var id = '';
-            if(this.concatID){
-                if(this.idText != null && this.idNum == null && this.idPropname == null){
-                    id += this.idText;
-                }
-                if(this.idPropname != null && this.field.hasOwnProperty(self.idPropname)){
-                    id += this.field[self.idPropname].toString();
-                }
-                if(this.idNum != null){
-                    id += '_' + this.idNum.toString();
-                }
-            }
-            else{
-                if(this.idText != null){
-                    id = this.idText;
-                }
-                else if(this.idPropname != null && this.field.hasOwnProperty(self.idPropname)){
-                    id = this.field[self.idPropname].toString();
-                }
-            }
+        compError: function(){
+            if((this.storeName !== 'formData' || this.storeName !== 'formRecord') && !(this.storeId)) return true;
+            else return false;
+        },
 
-            if(id.length > 0){
-                return id;
-            }
-            else{
-                return null;
-            }
+        storeIdPropname: function(){
+            return store.getStoreTableID(this.payload);
         },
-        inputSelectorStr: function(){
-            if(this.inputID){
-                return '#' + this.inputID.toString();
-            }
-            else{
-                return undefined;
-            }
+        descPropname: function(){
+            var propname;
+            if(this.storeName == 'formSections') propname = 'SectionDesc';
+            else if(this.storeName == 'formSubSections') propname = 'SubsectionDesc';
+            else if(this.storeName == 'formFields') propname = 'FieldDesc';
+            return propname;
         },
-        menuID: function(){
-            if(this.inputID){
-                return 'dateM' + this.inputID.toString();
-            }
-            else{
-                return 'dateMenu';
-            }
+
+        payload: function(){
+            return {stateName: this.stateName, storeName: this.storeName, id: this.storeId, propname: this.valPropname};
         },
-        inputLabel: function(){
-            var self = this;
-            if(this.labelText != null){
-                return this.labelText;
-            }
-            else if(this.labelPropname != null && this.field.hasOwnProperty(self.labelPropname)){
-                return this.field[self.labelPropname];
-            }
-            else{
-                return null;
-            }
+        origPayload: function(){
+            return Object.assign({}, this.payload, {stateName: 'database'});
         },
-        origVal: function(){
-            var self = this;
-            if(this.origField && this.origField[self.valPropname]){
-                return this.origField[self.valPropname];
-            }
-            else{
-                return null;
-            }
+        descPayload: function(){
+            return Object.assign({}, this.payload, {propname: this.descPropname});
         },
-        fieldVal: function(){
-            var self = this;
-            if(this.field && this.field[self.valPropname]){
-                return this.field[self.valPropname];
-            }
-            else{
-                return null;
-            }
+
+        valObj: function(){
+            return store.getObjProp(this.payload);
         },
-        inputVal: function(){
-            return this.fieldVal;
+        origValObj: function(){
+            return store.getObjProp(this.origPayload);
         },
-        pickerVal: {
+
+        /*pickerVal: {
             get: function(){
-                return this.fieldVal;
+                return this.valObj;
             },
             set: function(newValue){
-                console.log("setter");
+                if(this.debug) console.log("setter");
                 this.updateValue(newValue);
             }
+        },*/
+
+        // only for dialog
+        isDialog: function(){
+            return (this.stateName && this.stateName == 'dialog');
+        },
+        formPayload: function(){
+            if(this.isDialog) return Object.assign({}, this.payload, {stateName: 'form'});
+            else return null;
+        },
+        formValObj: function(){
+            if(this.isDialog) return store.getObjProp(this.payload);
+            else return null
+        },
+
+        inputID: function(){
+            var id = '';
+            if(this.storeId) id += 'input_' + this.storeName + '_' + this.storeIdPropname + this.storeId + '_' + this.valPropname;
+            else id += 'input_' + this.storeName + '_' + this.valPropname;
+
+            if(id.length > 0) return id;
+            else return null;
+        },
+        menuID: function(){
+            if(this.inputID) return this.inputID + '_menu';
+        },
+        pickerID: function(){
+            if(this.inputID) return this.inputID + '_picker';
+        },
+
+        inputLabel: function(){
+            if(this.valObj) return this.valObj.Label;
+            else return null;
+        },
+        inputDesc: function(){
+            var self = this;
+            if(this.storeName === 'formFields') return store.getObjProp(self.descPayload);
+            //else if(this.descPropname != null && this.valObj.hasOwnProperty(self.descPropname)) return this.valObj[self.descPropname];
+            else return null;
+        },
+
+        hasHint: function(){
+            if (this.inputDesc) return true;
+            else return false;
         },
         wasChanged: function(){
-            // both null or is equal for false
-            if( (!(this.origVal) && !(this.inputVal)) || (this.origVal == this.inputVal)){
-                return false;
-            }
-            else{
-                return true;
-            }
+            if(this.valObj.updateDB) return true;
+            else return false;
         },
         inputColor: function(){
-            if(this.wasChanged){
-                return 'green';
-            }
+            if(this.wasChanged) return 'green';
         },
         isSelected: function(){
         },
@@ -260,9 +312,9 @@ Vue.component('builder-date-picker-v', {
         },
         logMsg: function(){
             return this.valPropname + "\n" +
-            " - original: " + this.valToText(this.origVal) + "\n" + 
-            " - current: " + this.valToText(this.inputVal) + "\n" +
-            " - field: " + this.valToText(this.fieldVal);
+                " - original: " + this.valToText(this.origValObj) + "\n" + 
+                " - current: " + this.valToText(this.valObj) + "\n" +
+                " - input: " + this.valToText(this.inputValObj);
         }
     },
     methods:{
@@ -275,18 +327,89 @@ Vue.component('builder-date-picker-v', {
             else*/
                 return undefined;
         },
-        savePicker: function(){
+        
+        setPicker: function(){
             var self = this;
-            console.log(this.$refs[self.menuID]);
-            console.log(self.inputVal);
-            console.log(self.pickerVal);
-            this.$refs[self.menuID].save(self.pickerVal);
-            //this.updateValue(self.inuptVal);
+            // close menu
+            this.showMenu = false;
         },
-        //@blur (string)
+        //type input to text field @blur (string)
         updateFormatted: function(){
             var self = this;
             console.log(this.inputValFormatted);
+
+            this.pickerVal = moment(this.inputValFormatted).format("YYYY-MM-DD");
+        },
+        // @input (string)
+        updateValue:function(newValue){
+            var self = this;
+            console.log("text " + this.inputID + " @input " + newValue);
+            var formattedValue;
+
+            if(newValue){
+                formattedValue = newValue.trim();
+                if(newValue == ""){
+                    formattedValue = null;
+                }
+                // If the value was not already normalized,
+                // manually override it to conform
+                if (formattedValue !== newValue) {
+                    //this.$refs[this.inputID].value = formattedValue;
+                }
+            }
+
+            var newPayload = Object.assign({}, self.payload, {valObj: self.inputValObj});
+            store.updateObjProp(newPayload);
+        },
+
+        valToText: function(oVal){
+            if(oVal){
+                if(oVal.dbVal){
+                    return oVal.dbVal.toString();
+                }
+                else if(oVal.dbVal == ''){
+                    return 'blank';
+                }
+                else{
+                    return 'null';
+                }
+            }
+            else{
+                return 'null obj'
+            }
+        },
+        logValue: function(){
+            console.log(this.logMsg);
+        },
+        // @change (string)
+        changeValue: function(newValue){
+            if(this.debug) console.log("text " + this.inputID + " @change " + newValue);
+        },
+        // @update:error (boolean)
+        updateErr: function(newValue){
+            if(this.debug) console.log("text " + this.inputID + " @update:error " + newValue);
+        },
+        selectAll: function (event) {
+            // Workaround for Safari bug
+            // http://stackoverflow.com/questions/1269722/selecting-text-on-focus-using-jquery-not-working-in-safari-and-chrome
+            /*setTimeout(function () {
+                event.target.select()
+            }, 0)*/
+        },
+        clearInput: function(){
+            if(this.debug) console.log('clear input callback');
+            //this.inputVal = null;
+            return;
+        },
+        setError: function(errMsg){
+        },
+        reload: function(val){
+        }
+    }
+})
+
+
+/*
             if(this.inputValFormatted){
                 var arr;
                 var yearI;
@@ -352,76 +475,85 @@ Vue.component('builder-date-picker-v', {
                 this.updateValue(null);
                 return;
             }
+*/
+
+/*
+        field:{
+            type: Object,
+            required: true
         },
-        // @input (string)
-        updateValue:function(newValue){
+        origField:{
+            type: Object,
+            required: false
+        },
+        valPropname:{
+            type: String,
+            default: 'value',
+            required: false
+        },
+        idText:{
+            type: String,
+            required: false
+        },
+        idNum:{
+            type: Number,
+            required: false,
+        },
+        idPropname:{
+            type: String,
+            required: false
+        },
+        concatID:{
+            type: Boolean,
+            required: false,
+            default: false
+        },
+        labelText:{
+            type: String,
+            required: false
+        },
+        labelPropname:{
+            type: String,
+            required: false
+        },
+        dataPortion:{
+            type: String,
+            required: false
+        },
+
+
+
+
+        origVal: function(){
             var self = this;
-            console.log("text " + this.inputID + " @input " + newValue);
-            var formattedValue;
-
-            if(newValue){
-                formattedValue = newValue.trim();
-                if(newValue == ""){
-                    formattedValue = null;
-                }
-                // If the value was not already normalized,
-                // manually override it to conform
-                if (formattedValue !== newValue) {
-                    //this.$refs[this.inputID].value = formattedValue;
-                }
-            }
-
-            switch(this.dataPortion){
-                case 'form-data':
-                    eventHub.$emit('update-form-data', {valPropname: self.valPropname, val: formattedValue});
-                break;
-                case 'section':
-                    eventHub.$emit('update-section-data', {formSectionID: self.field.FormSectionID, valPropname: self.valPropname, val: formattedValue});
-                break;
-                case 'search':
-                    eventHub.$emit('update-search-data', {valPropname: self.valPropname, val: formattedValue})
-                default:
-                    eventHub.$emit('update-field', {fieldID: self.field.FieldId, valPropname: self.valPropname, val: formattedValue});
-            }
-        },
-        valToText: function(oVal){
-            var val = oVal;
-            if(val){
-                return val.toString();
-            }
-            else if(val == ''){
-                return 'blank';
+            if(this.origField && this.origField[self.valPropname]){
+                return this.origField[self.valPropname];
             }
             else{
-                return 'null';
+                return null;
             }
         },
-        logValue: function(){
-            console.log(this.logMsg);
+        fieldVal: function(){
+            var self = this;
+            if(this.field && this.field[self.valPropname]){
+                return this.field[self.valPropname];
+            }
+            else{
+                return null;
+            }
         },
-        // @change (string)
-        changeValue: function(newValue){
-            console.log("text " + this.inputID + " @change " + newValue);
+
+        inputVal: function(){
+            return this.fieldVal;
         },
-        // @update:error (boolean)
-        updateErr: function(newValue){
-            console.log("text " + this.inputID + " @update:error " + newValue);
+
+        pickerVal: {
+            get: function(){
+                return this.fieldVal;
+            },
+            set: function(newValue){
+                console.log("setter");
+                this.updateValue(newValue);
+            }
         },
-        selectAll: function (event) {
-            // Workaround for Safari bug
-            // http://stackoverflow.com/questions/1269722/selecting-text-on-focus-using-jquery-not-working-in-safari-and-chrome
-            /*setTimeout(function () {
-                event.target.select()
-            }, 0)*/
-        },
-        clearInput: function(){
-            console.log('clear input callback');
-            //this.inputVal = null;
-            return;
-        },
-        setError: function(errMsg){
-        },
-        reload: function(val){
-        }
-    }
-})
+*/

@@ -1,170 +1,297 @@
-Vue.component('builder-field-dialog-v', {
+Vue.component('psofia-field-dialog', {
 	// declare the props
 	props: {
-		formSectionId:{
-			type: [Number],
-			required: true
+		stateName:{	
+			type: String,
+			required: false,
+			default: 'dialog'
 		},
-		// fields for current section, including further subsections
-		fields:{
-			type: [Object, Array],
+		storeName:{
+			type: String,
+			required: false,
+			default: 'formFields'
+		},
+		storeId:{
+			type: Number,
 			required: false
 		},
+		props:{	// formSectionID, formSubSectionID
+			type: Object,
+			required: true
+		},
+		parentShowInactive:{
+			type: Boolean,
+			required: false,
+			default: false
+		},
 	},
-	template: `\
-		<v-dialog v-model="showDialog" max-width="500px">\
-			<v-card>\
-				<v-card-title>\
-					<span class="headline">{{ formTitle }}</span>\
-				</v-card-title>\
-				<v-card-text>\
-					<v-layout wrap>\
-						<v-flex xs12>\
-							<builder-text-v\
-								:field="editingField"\
-								:orig-field="origField"
-								val-propname="FieldName"\
-								id-text="editingFieldName"\
-								label-text="Field Name"\
-								data-portion="edit-dialog"\
-							></builder-text-v>\
-							<!--v-model="editingField.FieldName"-->\
-						</v-flex>\
-						<v-flex xs12>\
-							<builder-text-v\
-								:field="editingField"\
-								:orig-field="origField"
-								val-propname="FieldHTMLID"\
-								id-text="editingFieldHTMLID"\
-								label-text="Field HTML ID"\
-								data-portion="edit-dialog"\
-							></builder-text-v>\
-							<!--v-model="editingField.FieldHTMLID" label="Field HTML ID"-->\
-						</v-flex>\
-						<v-flex xs12>\
-							<builder-autocomplete-v\
-								:field="editingField"\
-								:orig-field="origField"
-								:autocomplete-options="allFieldTypes" \
-								val-propname="FieldTypeID" \
-								text-propname="FieldType" \
-								id-text="editingFieldType" \
-								label-text="Field Type" \
-								data-portion="edit-dialog"\
-								add-option\
-							></builder-autocomplete-v>\
-						</v-flex>\
-						<v-flex xs12 v-if="editingField.FieldTypeID == 7">\
-							<builder-autocomplete-v\
-								:field="editingField"\
-								:orig-field="origField"
-								:autocomplete-options="allValidationSets" \
-								val-propname="ValidationSetID" \
-								text-propname="ValidationSetName" \
-								id-text="editingVSet" \
-								label-text="Validation Set" \
-								data-portion="edit-dialog"\
-								add-option\
-							></builder-autocomplete-v>\
-						</v-flex>\
-						<!--<v-flex xs6 v-if="editingField.FieldTypeID == 3">\
-							<builder-checkbox-v\
-								:field="editingField"\
-								:orig-field="origField"
-								val-propname="HasMaxMin"\
-								id-text="editingMaxMinCk"\
-								label-text="Add Max/Min"\
-								data-portion="edit-dialog"\
-							></builder-checkbox-v>\
-						</v-flex>-->\
-						<v-flex xs6 v-if="editingField.FieldTypeID == 3">\
-							<builder-number-v\
-								:field="editingField"\
-								:orig-field="origField"
-								val-propname="FieldMin"\
-								id-text="editingFieldMin"\
-								label-text="Min"\
-								data-portion="edit-dialog"\
-							></builder-number-v>\
-						</v-flex>\
-						<v-flex xs6 v-if="editingField.FieldTypeID == 3">\
-							<builder-number-v\
-								:field="editingField"\
-								:orig-field="origField"
-								val-propname="FieldMax"\
-								id-text="editingFieldMax"\
-								label-text="Max"\
-								data-portion="edit-dialog"\
-							></builder-number-v>\
-						</v-flex>\
-						<v-flex xs12>\
-							<builder-checkbox-v\
-								:field="editingField"\
-								:orig-field="origField"
-								val-propname="Required"\
-								id-text="editingReq"\
-								label-text="Required"\
-								data-portion="edit-dialog"\
-							></builder-checkbox-v>\
-						</v-flex>
-						<v-flex xs12>\
-							<builder-checkbox-v\
-								:field="editingField"\
-								:orig-field="origField"
-								val-propname="VisibleOnEdit"\
-								id-text="editingVis"\
-								label-text="Visible On Edit"\
-								data-portion="edit-dialog"\
-							></builder-checkbox-v>\
-						</v-flex>
-						<v-flex xs12>\
-							<builder-checkbox-v\
-								:field="editingField"\
-								:orig-field="origField"
-								val-propname="Active"\
-								id-text="editingAct"\
-								label-text="Active"\
-								data-portion="edit-dialog"\
-							></builder-checkbox-v>\
-						</v-flex>
-					</v-layout>\
-				</v-card-text>\
-				<v-card-actions>\
-					<v-spacer></v-spacer>\
-					<v-btn color="blue darken-1" flat @click.native="close">Cancel</v-btn>\
-					<v-btn color="blue darken-1" flat @click.native="save">Save</v-btn>\
-				</v-card-actions>\
-			</v-card>\
-		</v-dialog>\
+	template: `
+		<v-dialog v-model="showDialog" max-width="800px">
+			<v-card>
+				<v-toolbar flat>
+                	<v-toolbar-title>{{dialogTitle}}</v-toolbar-title>
+                	<v-spacer></v-spacer>
+					<v-btn icon @click="deleteField">
+						<v-icon>delete</v-icon>
+					</v-btn>
+                </v-toolbar>
+
+                <v-progress-linear color="red" :active="appLoading" indeterminate absolute bottom></v-progress-linear>
+
+				<v-card-text>
+					<psofia-input v-for="(field, index) in inputFields" :key="index"
+						:store-name="storeName" :state-name="stateName" :store-id="storeId" :val-propname="field"
+					></psofia-input>
+
+					<v-row v-if="inputFields">
+	                    <v-col cols="12" xs="12" sm="6" md="4" lg="3">
+	                        <psofia-checkbox :state-name="stateName" :store-name="storeName" :store-id="storeId" val-propname="Required"></psofia-checkbox>
+	                    </v-col>
+	                    <v-col cols="12" xs="12" sm="6" md="4" lg="3">
+	                        <psofia-checkbox :state-name="stateName" :store-name="storeName" :store-id="storeId" val-propname="VisibleInHeader"></psofia-checkbox>
+	                    </v-col>
+	                </v-row>
+
+				</v-card-text>
+				<v-card-actions>
+					<v-spacer></v-spacer>
+					<v-btn @click="cancelDialog" text>Cancel</v-btn>
+					<v-btn @click="saveDialog" text>Save</v-btn>
+				</v-card-actions>
+			</v-card>
+		</v-dialog>
 	`,
+
+
 	data: function(){
 		return{
-			//list vars
-			/* copied from Vuetify for data-table w/ CRUD */
+			isLoading: false,
 			sharedState: store.state,
-			showDialog: false,
-			fieldHeaders: [
-				{text: 'Field Name', sortable: false},
-				{text: 'HTML ID', sortable: false},
-				{text: 'Field Type', sortable: false},
-				{text: 'Properties', sortable: false}
-			],
-			defaultField: {},
-			editingFieldID: -1,
-			origField: {},
-			editingField: {},
 		}
 	},
-	/*create: function(){
-		this.initialize(); // idk why not done in ready?
-	},*/
-	mounted: function(){
-		this.initialize(); // idk why not done in ready?
+
+
+	created: function(){
+		//this.initialize();
 	},
+	mounted: function(){
+		var self = this;
+		Vue.nextTick(function(){
+            self.initialize();
+        });
+	},
+
+
 	watch: {
     },
+
+
 	computed: {
-		allSections:function(){
+		stateLoading: function(){
+            return this.sharedState.isLoading;
+        },
+        colsLoading: function(){
+            return this.sharedState.columns.isLoading;
+        },
+        dialogLoading: function(){
+            return this.sharedState.dialog.isLoading;
+        },
+        formLoading: function(){
+            return this.sharedState.form.isLoading;
+        },
+        storeLoading: function(){
+            return this.stateLoading || this.dialogLoading || this.formLoading || this.colsLoading;
+        },
+        appLoading: function(){
+            return this.storeLoading || this.isLoading;
+        },
+
+        showDialog: function(){
+        	return this.sharedState.dialogSettings.isOpen;
+        },
+
+        payload: function(){
+        	if (this.storeName && this.storeId) return {stateName: this.stateName, storeName: this.storeName, id: this.storeId, props: this.props};
+        },
+
+        formField: function(){
+        	if (this.payload) return store.getDataObj(this.payload);
+        },
+
+        inputFields: function(){
+            var self = this;
+            if(this.formField){
+                return Object.keys(self.formField).filter(function(field){
+                    return (self.formField[field].isInput && !(self.formField[field].isHidden) && (self.formField[field].valType !== 'boolean'));
+                });
+            }
+        },
+
+		/* Copied from Vuetify for data-table w/ CRUD */
+		dialogTitle: function(){
+			if(this.storeId === this.storeId){
+				return 'New Item';
+			}
+			else if(this.storeId < 0){
+				return 'Editing New Item';
+			}
+			else{
+				return 'Edit Item';
+			}
+		}
+	},
+	methods: {
+		initialize: function(){
+			/*var self = this;
+			console.log('init dialog');
+			this.defaultField = this.getDefaultField();
+			this.origField = clone(self.defaultField);
+			this.editingField = clone(self.defaultField);
+			this.listenOnHub();*/
+		},
+
+        closeDialog: function(){
+        	var self = this;
+        	var payload2 = Object.assign({}, self.payload, {isOpen: false});
+        	store.setDialog(payload2);
+			//eventHub.$emit('add-new-field', {fieldID: self.editingFieldID, field: self.editingField});
+		},
+		cancelDialog: function(){
+			this.closeDialog();
+		},
+		saveDialog: function() {
+			var self = this;
+			
+			this.closeDialog();
+		},
+		deleteField: function() {
+			var self = this;
+
+			//confirm('Are you sure you want to delete this field?') //&& this.fields.splice(index, 1);
+
+			eventHub.$emit('delete-field', {fieldID: self.editingFieldID});
+			this.closeDialog();
+		},
+	}
+})
+
+
+
+
+/*
+<!--<v-layout wrap>
+						<v-flex xs12>
+							<builder-text-v
+								:field="editingField"
+								:orig-field="origField"
+								val-propname="FieldName"
+								id-text="editingFieldName"
+								label-text="Field Name"
+								data-portion="edit-dialog"
+							></builder-text-v>
+							<!--v-model="editingField.FieldName"--
+						</v-flex>
+						<v-flex xs12>
+							<builder-text-v
+								:field="editingField"
+								:orig-field="origField"
+								val-propname="FieldHTMLID"
+								id-text="editingFieldHTMLID"
+								label-text="Field HTML ID"
+								data-portion="edit-dialog"
+							></builder-text-v>
+							<!--v-model="editingField.FieldHTMLID" label="Field HTML ID"--
+						</v-flex>
+						<v-flex xs12>
+							<builder-autocomplete-v
+								:field="editingField"
+								:orig-field="origField"
+								:autocomplete-options="allFieldTypes"
+								val-propname="FieldTypeID"
+								text-propname="FieldType"
+								id-text="editingFieldType"
+								label-text="Field Type"
+								data-portion="edit-dialog"
+								add-option
+							></builder-autocomplete-v>
+						</v-flex>
+						<v-flex xs12 v-if="editingField.FieldTypeID == 7">
+							<builder-autocomplete-v
+								:field="editingField"
+								:orig-field="origField"
+								:autocomplete-options="allValidationSets"
+								val-propname="ValidationSetID"
+								text-propname="ValidationSetName"
+								id-text="editingVSet"
+								label-text="Validation Set"
+								data-portion="edit-dialog"
+								add-option
+							></builder-autocomplete-v>
+						</v-flex>
+						<!--<v-flex xs6 v-if="editingField.FieldTypeID == 3">
+							<builder-checkbox-v
+								:field="editingField"
+								:orig-field="origField"
+								val-propname="HasMaxMin"
+								id-text="editingMaxMinCk"
+								label-text="Add Max/Min"
+								data-portion="edit-dialog"
+							></builder-checkbox-v>
+						</v-flex>--
+						<v-flex xs6 v-if="editingField.FieldTypeID == 3">
+							<builder-number-v
+								:field="editingField"
+								:orig-field="origField"
+								val-propname="FieldMin"
+								id-text="editingFieldMin"
+								label-text="Min"
+								data-portion="edit-dialog"
+							></builder-number-v>
+						</v-flex>
+						<v-flex xs6 v-if="editingField.FieldTypeID == 3">
+							<builder-number-v
+								:field="editingField"
+								:orig-field="origField"
+								val-propname="FieldMax"
+								id-text="editingFieldMax"
+								label-text="Max"
+								data-portion="edit-dialog"
+							></builder-number-v>
+						</v-flex>
+						<v-flex xs12>
+							<builder-checkbox-v
+								:field="editingField"
+								:orig-field="origField"
+								val-propname="Required"
+								id-text="editingReq"
+								label-text="Required"
+								data-portion="edit-dialog"
+							></builder-checkbox-v>
+						</v-flex>
+						<v-flex xs12>
+							<builder-checkbox-v
+								:field="editingField"
+								:orig-field="origField"
+								val-propname="VisibleOnEdit"
+								id-text="editingVis"
+								label-text="Visible On Edit"
+								data-portion="edit-dialog"
+							></builder-checkbox-v>
+						</v-flex>
+						<v-flex xs12>
+							<builder-checkbox-v
+								:field="editingField"
+								:orig-field="origField"
+								val-propname="Active"
+								id-text="editingAct"
+								label-text="Active"
+								data-portion="edit-dialog"
+							></builder-checkbox-v>
+						</v-flex>
+					</v-layout>-->
+*/
+
+		/*allSections:function(){
 			return this.sharedState.sections;
 		},
 		allSubSections:function(){
@@ -175,39 +302,17 @@ Vue.component('builder-field-dialog-v', {
 		},
 		allValidationSets:function(){
 			return this.sharedState.validationSets;
-		},
+		},*/
 		/*minFieldID:function(){
 			return store.getMinFormFieldID();
 		},*/
 
-		/* Copied from Vuetify for data-table w/ CRUD */
-		formTitle () {
-			if(this.editingFieldID === this.newFieldID()){
-				return 'New Item';
-			}
-			else if(this.editingFieldID < 0){
-				return 'Editing New Item';
-			}
-			else{
-				return 'Edit Item';
-			}
-		}
-	},
-	methods: {
-		initialize: function(){
-			var self = this;
-			console.log('init dialog');
-			this.defaultField = this.getDefaultField();
-			this.origField = clone(self.defaultField);
-			this.editingField = clone(self.defaultField);
-			this.listenOnHub();
-		},
-		listenOnHub: function(){
+				/*listenOnHub: function(){
 			var self = this;
 			eventHub.$on('open-edit-dialog-full', self.openDialog);
-			eventHub.$on('update-edit-dialog', self.updateEditingField);
-		},
-		minFieldID:function(){
+			//eventHub.$on('update-edit-dialog', self.updateEditingField);
+		},*/
+		/*minFieldID:function(){
 			return store.getMinFormFieldID();
 		},
 		newFieldID:function(){
@@ -226,12 +331,12 @@ Vue.component('builder-field-dialog-v', {
             return set.find(function(s){
                 return s[idPropname] == id;
             });
-        },
-		getDefaultField:function(){
+        },*/
+		/*getDefaultField:function(){
         	var self = this;
         	return store.getDefaultFieldForSection(self.sectionId);
-        },
-		getEditingFieldClone: function(fieldID){
+        },*/
+		/*getEditingFieldClone: function(fieldID){
         	var self = this;
         	var f = this.findInSetByID(self.fields, fieldID, "FormFieldID");
         	if(f){
@@ -243,21 +348,9 @@ Vue.component('builder-field-dialog-v', {
         		f.FieldOrder = this.maxFieldOrder() + 1;
         		return f;
         	}
-        },
+        },*/
 
-		getFieldType:function(field){
-			var ft = this.allFieldTypes.find(function(f){
-				return f.FieldTypeID == field.FieldTypeID;
-			})
-			if(ft){
-				return ft.FieldType;
-			}
-			else{
-				return '';
-			}
-		},
-
-		updateEditingField: function(payload){
+		/*updateEditingField: function(payload){
 			if(payload.val){
                 // check if change to form val
                 if(this.editingField[payload.valPropname] != payload.val){
@@ -303,9 +396,9 @@ Vue.component('builder-field-dialog-v', {
                     this.editingField.updateDB = true;
                 }
             }
-		},
+		},*/
 
-		openDialog: function(payload){	//{sectionID: this.section.FormSectionID, fieldID: field.FormFieldID}
+		/*openDialog: function(payload){	//{sectionID: this.section.FormSectionID, fieldID: field.FormFieldID}
         	var self = this;
         	console.log('openDialog');
         	console.log(payload);
@@ -313,42 +406,10 @@ Vue.component('builder-field-dialog-v', {
         		/*var f = self.findInSetByID(self.fields, payload.fieldID, 'FormFieldID')
         		if(f){
         			self.updateField(f);
-        		}*/
+        		}*
         		this.editingFieldID = payload.fieldID;
         		this.origField = this.getEditingFieldClone(payload.fieldID);
         		this.editingField = this.getEditingFieldClone(payload.fieldID);
         		this.showDialog = true;
         	}
-        },
-
-        close: function(){
-			var self = this;
-			if(this.showDialog){
-				this.showDialog = false;
-			}
-		},
-
-
-		save: function() {
-			var self = this;
-			if (this.editingFieldID != this.newFieldID()) {
-				//Object.assign(this.fields[this.editedIndex], this.editedField)
-				eventHub.$emit('update-field', {fieldID: self.editingFieldID, updatedField: self.editingField});
-			}
-			else {
-				//this.fields.push(this.editedField)
-				eventHub.$emit('add-new-field', {fieldID: self.editingFieldID, field: self.editingField});
-			}
-			this.close();
-		},
-
-		deleteField: function() {
-			var self = this;
-
-			//confirm('Are you sure you want to delete this field?') //&& this.fields.splice(index, 1);
-
-			eventHub.$emit('delete-field', {fieldID: self.editingFieldID});
-			this.close();
-		},
-	}
-})
+        },*/

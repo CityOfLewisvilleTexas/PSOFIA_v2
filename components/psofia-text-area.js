@@ -1,50 +1,21 @@
 Vue.component('psofia-textarea', {
-	// declare the props
 	props: {
-		dataName:{	// formData, sections, subSections, fields, etc
+		stateName:{
 			type: String,
-			required: true
+			required: false,
+			default: 'form'
 		},
-		dataId:{	// formFieldID, formSectionID, formSubSectionID, etc
+		storeName:{	// formData, sections, subSections, fields, etc
+			type: String,
+			required: true,
+		},
+		storeId:{	// formFieldID, formSectionID, formSubSectionID, etc
 			type: Number,
 			required: false
 		},
 		valPropname:{
 			type: String,
 			required: true
-		},
-		formFieldId:{
-			type: Number,
-			required: false
-		},
-		idText:{
-			type: String,
-			required: false
-		},
-		idNum:{
-			type: Number,
-			required: false
-		},
-		idPropname:{
-			type: String,
-			required: false
-		},
-		concatID:{
-			type: Boolean,
-			required: false,
-			default: false
-		},
-		labelText:{
-			type: String,
-			required: false
-		},
-		labelPropname:{
-			type: String,
-			required: false
-		},
-		descPropname:{
-			type: String,
-			required: false
 		},
 		inputDisabled:{
 			type: Boolean,
@@ -56,14 +27,19 @@ Vue.component('psofia-textarea', {
 			required: false,
 			default: true
 		},
+		parentShowInactive:{
+			type: Boolean,
+			required: false,
+			default: false
+		},
 	},
 	template: `
-		<v-textarea box
+		<v-textarea auto-grow rows="1"
 			:id="inputID"
 			:ref="inputID"
 			
-			v-bind:value="inputVal"
-			v-on:input="updateValue"
+			:value="inputVal"
+			@input="updateValue"
 			@change="changeValue"
 			@update:error="updateErr"
 			
@@ -91,12 +67,13 @@ Vue.component('psofia-textarea', {
 			isLoading: true,
 			inputValObj: {},
 			inputVal: '',
-			valNotes: '',
 			hasError: false,
 			errMsg: '',
 			debug: true,
 		}
 	},
+
+	
 	created: function(){
 		//this.initialize();
 	},
@@ -106,6 +83,8 @@ Vue.component('psofia-textarea', {
             self.initialize();
         });
 	},
+
+
 	watch:{
 		valObj: {
 			handler: function(val, prev){
@@ -117,82 +96,82 @@ Vue.component('psofia-textarea', {
 			deep: true
 		}
 	},
+
+
 	computed:{
+		stateLoading: function(){
+            return this.sharedState.isLoading;
+        },
+        colsLoading: function(){
+            return this.sharedState.columns.isLoading;
+        },
+        formLoading: function(){
+            return this.sharedState.form.isLoading;
+        },
+        dbLoading: function(){
+            return this.sharedState.database.isLoading;
+        },
+        storeLoading: function(){
+            return this.stateLoading || this.colsLoading || this.formLoading || this.dbLoading;
+        },
+        appLoading: function(){
+            return this.storeLoading || this.isLoading;
+        },
+
 		compError: function(){
-			if((this.dataName !== 'formData' || this.dataName !== 'record') && !(this.dataId)){
+			if((this.storeName !== 'formData' || this.storeName !== 'formRecord') && !(this.storeId)){
 				return true;
 			}
 			else return false;
 		},
-		dataIdPropname: function(){
+		storeIdPropname: function(){
+			return this.sharedState.tableIDs[this.storeName];
+		},
+		descPropname: function(){
 			var propname;
-			if(this.dataName == 'sections'){
-				propname = 'FormSectionID';
+			if(this.storeName == 'formSections'){
+				propname = 'SectionDesc';
 			}
-			else if(this.dataName == 'subSections'){
-				propname = 'FormSubSectionID';
+			else if(this.storeName == 'formSubSections'){
+				propname = 'SubsectionDesc';
 			}
-			else if(this.dataName == 'fields'){
-				propname = 'FormFieldID';
+			else if(this.storeName == 'formFields'){
+				propname = 'FieldDesc';
 			}
 			return propname;
 		},
 
-		payload: function(){
-			var self = this;
-			if(!(this.dataId)){
-				return {objName: self.dataName, propname: self.valPropname};
-			}
-			else{
-				return {objName: self.dataName, id: self.dataId, idPropname: self.dataIdPropname, propname: self.valPropname};
-			}
+        payload: function(){
+        	//var self = this;
+			if(!(this.storeId)) return {storeName: this.storeName, propname: this.valPropname};
+			else return {storeName: this.storeName, id: this.storeId, idPropname: this.storeIdPropname, propname: this.valPropname};
 		},
 		origPayload: function(){
-			var self = this;
-			return Object.assign({}, self.payload, {isOrig:true});
+			//var self = this;
+			return Object.assign({}, this.payload, {isOrig:true});
 		},
+		descPayload: function(){
+			//var self = this;
+			return Object.assign({}, this.payload, {propname:this.descPropname});
+		},
+		
 		valObj: function(){
-			var self = this;
-			return store.getObjProp(self.payload);
+			//var self = this;
+			return store.getObjProp(this.payload);
 		},
 		origValObj: function(){
-			var self = this;
-			return store.getObjProp(self.origPayload);
+			//var self = this;
+			return store.getObjProp(this.origPayload);
 		},
 
-		formField: function(){
-			var self = this;
-			if(self.formFieldId){
-				return store.getFormField({id:self.formFieldId});
-			}
-			else return null;
-		},
 		inputID: function(){
-			var self = this;
 			var id = '';
-
-			if(this.formField){
-				id += 'input_' + this.formField.FormFieldID;
-			}
-			/*else if(this.concatID){
-				if(this.idText != null && this.idNum == null && this.idPropname == null){
-					id += this.idText;
-				}
-				if(this.idPropname != null && this.formField.hasOwnProperty(self.idPropname)){
-					id += this.formField[self.idPropname].toString();
-				}
-				if(this.idNum != null){
-					id += '_' + this.idNum.toString();
-				}
+			if(this.storeId){
+				id += 'input_' + this.storeName + '_' + this.storeIdPropname + this.storeId + '_' + this.valPropname;
 			}
 			else{
-				if(this.idText != null){
-					id = this.idText;
-				}
-				else if(this.idPropname != null && this.formField.hasOwnProperty(self.idPropname)){
-					id = this.formField[self.idPropname].toString();
-				}
-			}*/
+				id += 'input_' + this.storeName + '_' + this.valPropname;
+			}
 
 			if(id.length > 0){
 				return id;
@@ -200,23 +179,15 @@ Vue.component('psofia-textarea', {
 			else return null;
 		},
 		inputLabel: function(){
-			var self = this;
-
-			if(this.formField){
-				return this.formField.FieldName;
+			if(this.valObj){
+				return this.valObj.Label;
 			}
-			/*else if(this.labelText != null){
-				return this.labelText;
-			}
-			else if(this.labelPropname != null && this.formField.hasOwnProperty(self.labelPropname)){
-				return this.formField[self.labelPropname];
-			}*/
 			else return null;
 		},
 		inputDesc: function(){
 			var self = this;
-			if(this.formField){
-				return this.formField.FieldDesc;
+			if(this.storeName === 'fields'){
+				return store.getObjProp(self.descPayload);
 			}
 			/*else if(this.descPropname != null && this.formField.hasOwnProperty(self.descPropname)){
 				return this.formField[self.descPropname];
@@ -251,11 +222,13 @@ Vue.component('psofia-textarea', {
 		},
 		logMsg: function(){
 			return this.valPropname + "\n" +
-			" - original: " + this.valToText(this.origValObj) + "\n" + 
-			" - current: " + this.valToText(this.valObj) + "\n" +
+			" - database: " + this.valToText(this.origValObj) + "\n" + 
+			" - form (current): " + this.valToText(this.valObj) + "\n" +
 			" - input: " + this.valToText(this.inputValObj);
 		}
 	},
+
+
 	methods:{
 		initialize: function(){
 			this.loadInput();
@@ -265,13 +238,15 @@ Vue.component('psofia-textarea', {
 			var self = this;
 
 			this.inputValObj = clone(self.valObj);
-			this.inputVal = this.inputValObj.displayVal;
-			this.loading = false;
+			Vue.nextTick(function(){
+				self.inputVal = self.inputValObj.displayVal;
+				self.isLoading = false;
+			});
 		},
 		// @input (string)
 		updateValue:function(newValue){
 			var self = this;
-			console.log("textarea " + this.inputID + " @input " + newValue);
+			if(this.debug) console.log("textarea " + this.inputID + " @input " + newValue);
 
 			var newVal = newValue;
 			this.inputValObj.displayVal = newValue;
@@ -326,6 +301,10 @@ Vue.component('psofia-textarea', {
 			if(this.debug) console.log('clear input callback');
 			//this.inputVal = null;
   			return;
+		},
+		setError: function(errMsg){
+		},
+		reload: function(val){
 		},
 	}
 })

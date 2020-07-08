@@ -1,326 +1,357 @@
-var store = {
-    debug: true,
-    warnDebug: true,
-    errDebug: true,
+//import Vuex from 'vuex'
+//import Vue from 'vue'
+
+//import getters from './getters'
+
+//Vue.use(Vuex);
+
+const store = new Vuex.Store({
     state: {
-        isLoading: true,
-        lastLoad: null,
-        lastChange: null,
-        needsRefresh: false,
-        connections:{
-            isOnLine: true,
-            unsentReq: false,
-            checkServer: true,
-            serverDown: false,
-            sqlDown: false,
-            unsentChecktime: null,
-            serverChecktime: null,
+        debug: false,
+        warnDebug: true,
+        errDebug: true,
+        routeComponent: null,
+        appSettings:{
+            nightView: false,
+            connections:{ isOnLine: true, unsentReq: false, checkServer: true, serverDown: false, sqlDown: false, unsentChecktime: null, serverChecktime: null, },
+            user:{ token:{ isLoading: true, loadDate: null, val: null, }, email:{ isLoading: true, loadDate: null, val: null, }, adAccount:{ isLoading: true, loadDate: null, firstName: null, lastName: null, username: null, inITS: false, }, },
         },
-        nightView: false,
+        // route:{ props:{}, storeName1:{ stateName1:{} } }
+        // route:{ props:{}, setName1:{ storeName1:{} } }
 
-        user:{
-            isLoading: false,
-                _isLoading:  {token:false, email:false, adAccount:false},
-            lastLoad: null,
-                _lastLoad:  {token:null, email:null, adAccount:null},
-            token: null, email: null, username: null, firstName: null, lastName: null, inITS: false, hideDev: false,
-        },
-
-        columns: {
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false, formsList:false, recordsList:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null, formsList:null, recordsList:null},
-            formData: [], formRecord: [],
-                formSections: [], formSubSections: [], formFields: [], formValSets: [], formVsOptions: [],
-                //formVsEntries: [], formVseCategories: [],
-            allForms: [], allDepartments: [], allSections: [], allSubSections: [], allFieldTypes: [], allValSets: [],
-            formsList: [], recordsList: [],
-        },
-        tableIDs:{
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null},
-            formData: null, formRecord: null,
-                formSections: null, formSubSections: null, formFields: null, formValSets: null, formVsOptions: null,
-            allForms: null, allDepartments: null, allSections: null, allSubSections: null, allFieldTypes: null, allValSets: null,
-        },
-        orderIDs:{
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null},
-            formData: null, formRecord: null,
-                formSections: null, formSubSections: null, formFields: null, formValSets: null, formVsOptions: null,
-            allForms: null, allDepartments: null, allSections: null, allSubSections: null, allFieldTypes: null, allValSets: null,
-        },
-
-        datatables:{
-            isLoading: false,
-                _isLoading:  {formsList:false, recordsList:false},
-            lastLoad: null,
-                _lastLoad:  {formsList:null, recordsList:null},
-            formsList: [],          //RESULT SET: Forms (used in List - Forms)
-            recordsList: [],        //RESULT SET: Records (used in List - Records)
-            recordsList_formID: null,   //ugh
-            recordsList_formData: null,
-            recordsList_fields: [],        //RESULT SET: FormFields (used in List - Records)
-            recordsList_vsOptions: [],        //RESULT SET: FormVSOptions (used in List - Records)
-            valSetsList: [],        //RESULT SET: ValSets (used in List - Val Sets)
-            vsOptionsList: [],        //RESULT SET: ValSetOptions (used in List - Val Sets)
-            settings: {
-                formsList:{
+        list_forms:{
+            props:{
+                wsProps:{ deptID: null, keepInactive: false, onlyInactive: false, },
+                currentWSProps:{ deptID: null, keepInactive: false, onlyInactive: false, },
+                tableSettings:{
                     searchStr: '', sortBy: [], sortDesc: [],
                     showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
-                    wsProps:{ deptID: null, keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ deptID: null, keepInactive: false, onlyInactive: false, },
                 },
-                recordsList:{
-                    formID: null, searchStr: '', sortBy: [], sortDesc: [],
-                    //paramSpecific: { default: {searchStr: '', sortBy: [], sortDesc: [],}, },        //[formID]: {searchStr: '', sortBy: [], sortDesc: [],},
+            },
+            forms:{
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+        },
+        list_records:{
+            props:{
+                wsProps:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, },
+                currentWSProps:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, },
+                tableSettings:{
+                    searchStr: '', sortBy: [], sortDesc: [],
                     showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'left', showColFilters: false, perPage: null,
-                    wsProps:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, },
                 },
-                valSetsList:{
+            },
+            records:{
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+            formData:{      //RESULT SET: FormData (used in List - Records)
+                columns:{ isLoading: false, loadDate: null, dataObj: null, tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: null, },
+            },
+            formFields:{        //RESULT SET: FormFields (used in List - Records)
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+            formVSOptions:{     //RESULT SET: FormVSOptions (used in List - Records)
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+        },
+        list_valSets:{
+            props:{
+                wsProps:{ keepInactive: false, onlyInactive: false, },
+                currentWSProps:{ keepInactive: false, onlyInactive: false, },
+                tableSettings:{
                     searchStr: '', sortBy: [], sortDesc: [],
                     showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
-                    wsProps:{ keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ keepInactive: false, onlyInactive: false, },
                 },
-                vsOptionsList:{
-                    valSetID: null, searchStr: '', sortBy: [], sortDesc: [],
-                    //paramSpecific: { default: {searchStr: '', sortBy: [], sortDesc: [],}, },        //[valSetID]: {searchStr: '', sortBy: [], sortDesc: [],},
+            },
+            valSets:{
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+        },
+        list_vsOptions:{
+            props:{
+                wsProps:{ valSetID: null, keepInactive: false, onlyInactive: false, },
+                currentWSProps:{ valSetID: null, keepInactive: false, onlyInactive: false, },
+                tableSettings:{
+                    searchStr: '', sortBy: [], sortDesc: [],
                     showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
-                    wsProps:{ valSetID: null, keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ valSetID: null, keepInactive: false, onlyInactive: false, },
                 },
+            },
+            vsOptions:{
+                columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, },
+                database:{ isLoading: false, loadDate: null, dataObj: [], },
             },
         },
 
-        database:{
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null},
-            formData: null, formRecord: null,
-                formSections: [], formSubSections: [], formFields: [], formValSets: [], formVsOptions: [],
-                //formVsEntries: [], formVseCategories: [],      //vsOptions may be just the data from ValidationSetOptions table, or combo of Options, Entries, and Category tables
-            allForms: [], allDepartments: [], allSections: [], allSubSections: [], allFieldTypes: [], allValSets: [],
-        },
-        // same as database
-        form:{
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null},
-            formData: null, formRecord: null,
-                formSections: [], formSubSections: [], formFields: [], formValSets: [], formVsOptions: [],
-                //formVsEntries: [], formVseCategories: [],      //vsOptions may be just the data from ValidationSetOptions table, or combo of Options, Entries, and Category tables
-            allForms: [], allDepartments: [], allSections: [], allSubSections: [], allFieldTypes: [], allValSets: [],
-        },
-        // specify first and last section, same as database otherwise
-        default:{
-            isLoading: false,
-                _isLoading:  {formData:false, formRecord:false, formSections:false, formSubSections:false, formFields:false, formValSets:false, formVsOptions:false, allForms:false, allDepartments:false, allSections:false, allSubSections:false, allFieldTypes:false, allValSets:false},
-            lastLoad: null,
-                _lastLoad:  {formData:null, formRecord:null, formSections:null, formSubSections:null, formFields:null, formValSets:null, formVsOptions:null, allForms:null, allDepartments:null, allSections:null, allSubSections:null, allFieldTypes:null, allValSets:null},
-            formData: null, formRecord: null,
-                formSections: null, firstSection: null, lastSection: null, formSubSections: null, formFields: null, formValSets: null, formVsOptions: null,
-            allForms: null, allDepartments: null, allSections: null, allSubSections: null, allFieldTypes: null, allValSets: null,
-        },
-        // builder only, formFields, (department, validationSets?)
-        dialog:{
-            isLoading: false,
-                _isLoading:  {formFields:false, allDepartments:false, allFieldTypes:false, allValSets: false},
-            lastLoad: null,
-                _lastLoad:  {formFields:null, allDepartments:null, allFieldTypes:null, allValSets: null},
-            formFields: [],  //formValSets: [], formVsOptions: [], //formVsEntries: [], formVseCategories: [],      //vsOptions may be just the data from ValidationSetOptions table, or combo of Options, Entries, and Category tables
-            allDepartments: [], allFieldTypes: [], allValSets: [],
+        build:{
+            props:{
+                //dialog:{ isLoading: false, loadDate: null, dataObj: [], },
+                wsProps:{ formID: null, keepInactive: false, },
+                currentWSProps:{ formID: null, keepInactive: false, },
+            },
+            formData:{ columns:{ isLoading: false, loadDate: null, dataObj: null, tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: null, }, form:{ isLoading: false, loadDate: null, dataObj: null, }, default:{ isLoading: false, loadDate: null, dataObj: null, }, },
+            formSections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formSubSections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formFields:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], },
+                //dialog:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+            formValSets:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formVsOptions:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            forms:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            departments:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            sections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            subSections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            fieldTypes:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], },
+                //dialog:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+            valSets:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, form:{ isLoading: false, loadDate: null, dataObj: [], }, default:{ isLoading: false, loadDate: null, dataObj: [], },
+                //dialog:{ isLoading: false, loadDate: null, dataObj: [], },
+            },
+            //build_dialogSettings:{ storeName: null, id: null, isOpen: false, isNew: false, },
         },
 
-        dialogSettings:{
-            storeName: null,
-            id: null,
-            isOpen: false,
-            isNew: false,
+        entry:{
+            props:{
+                wsProps:{ formID: null, recordNumber: null, keepInactive: false, },
+                currentWSProps:{ formID: null, recordNumber: null, keepInactive: false, },
+            },
+            formData:{ columns:{ isLoading: false, loadDate: null, dataObj: null, tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: null, }, },
+            formRecord:{ columns:{ isLoading: false, loadDate: null, dataObj: null, tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: null, }, form:{ isLoading: false, loadDate: null, dataObj: null, }, default:{ isLoading: false, loadDate: null, dataObj: null, }, },
+            formSections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formSubSections:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formFields:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formValSets:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, },
+            formVsOptions:{ columns:{ isLoading: false, loadDate: null, dataObj: [], tableID: null, orderID: null, }, database:{ isLoading: false, loadDate: null, dataObj: [], }, },
         },
+
     },
 
 /* GENERAL NOTES:
-    stateName: first level under this.state - database, form, dialog, default
-    storeName: corresponds to tables in SQL, second level under this.state - formData, formRecords, formSections, formFields
+    storeName: corresponds to tables in SQL, first level under this.state - formData, formRecords, formSections, formFields
+    stateName: second level under this.state - database, form, default, dialog
     vars in functions:
-        storeObj: selected storeName object
-            can be either an object (formData, formRecord), or an array of objects (formSections, formFields, etc), unless specified (usually called storeObjs);
-        dataObj: a specific object in storeObj or the storeObj itself (always for formData, formRecord, if id isn't in payload for storeObj that is an array)
+        storeObj: selected storeName object (obj with all props, actual data in dataObj)
+        dataObj: the dataObj in storeObj (ifID isn't in payload, returns whole array [except formData, formRecord])
         storeObjs/storeArr: must be a storeObj that is an array (formSection, formFields, etc)
-            will be filtered?: automatically filters out inactive, unless payload.isActive is sent, filters out anything based on payload.props if included (payload.id should NOT be included);
+            will be filtered?: automatically filters out inactive, unless payload.isActive is sent, filters out anything based on payload.props ifincluded (payload.id should NOT be included);
 */
 
 
-// ADD TO LIVE FOLDER
-    setUnsentReq(newVal, checktime){
-        if(!this.state.connections.unsentChecktime || checktime.isAfter(this.state.connections.unsentChecktime)){
-            this.state.connections.unsentChecktime = checktime;
-            if(this.state.connections.unsentReq != newVal) this.state.connections.unsentReq = newVal;
-        }
+
+/* GETTERS */
+    getters,
+
+
+/* MUTATIONS */
+    mutations:{
+    /* APP SETTINGS */
+        switchNightView(state){ state.appSettings.nightView = !state.appSettings.nightView; },
+        set_unsent(state, payload){
+            state.appSettings.connections.unsentChecktime = payload.checktime;
+            if(payload.hasOwnProperty('unsentReq')) state.appSettings.connections.unsentReq = payload.unsentReq;
+        },      //set_unsentReq(state, payload){ state.appSettings.connections.unsentReq = payload.unsentReq; },    //set_checktime_unsent(state, payload){ state.appSettings.connections.unsentChecktime = payload.checktime; },
+        set_checkServer(state, payload){ state.appSettings.connections.checkServer = payload.checkServer; },
+        set_server(state, payload){
+            state.appSettings.connections.serverChecktime = payload.checktime;
+            if(payload.hasOwnProperty('serverDown')) state.appSettings.connections.serverDown = payload.serverDown;
+        },      //set_serverDown(state, payload){ state.appSettings.connections.serverDown = payload.serverDown; },   //set_checktime_server(state, payload){ state.appSettings.connections.serverChecktime = payload.checktime; },
+        set_user_token(state, payload){
+            state.appSettings.user.token.isLoading = true;
+            state.appSettings.user.email.isLoading = true;
+            state.appSettings.user.adAccount.isLoading = true;
+            state.appSettings.user.token.loadDate = payload.loadDate;
+            if(payload.hasOwnProperty('token')) state.appSettings.user.token.val = payload.token;
+            state.appSettings.user.token.isLoading = false;
+        },      //set_user_isLoading_token(state, payload){ state.appSettings.user.token.isLoading = payload.isLoading; },
+        set_user_email(state, payload){
+            state.appSettings.user.email.loadDate = payload.loadDate;
+            if(payload.hasOwnProperty('email')) state.appSettings.user.email.val = payload.email;
+            state.appSettings.user.email.isLoading = false;
+        },      //set_user_isLoading_email(state, payload){ state.appSettings.user.email.isLoading = payload.isLoading; },
+        set_user_adAccount(state, payload){
+            state.appSettings.user.adAccount.loadDate = payload.loadDate;
+            if(payload.hasOwnProperty('firstName')) state.appSettings.user.adAccount.firstName = payload.firstName;
+            if(payload.hasOwnProperty('lastName')) state.appSettings.user.adAccount.lastName = payload.lastName;
+            if(payload.hasOwnProperty('username')) state.appSettings.user.adAccount.username = payload.username;
+            if(payload.hasOwnProperty('inITS')) state.appSettings.user.adAccount.inITS = payload.inITS;
+            state.appSettings.user.adAccount.isLoading = false;
+        },      //set_firstName(state, payload){ state.appSettings.user.adAccount.firstName = payload.firstName; }, //set_lastName(state, payload){ state.appSettings.user.adAccount.lastName = payload.lastName; },    //set_username(state, payload){ state.appSettings.user.adAccount.username = payload.username; },    //set_inITS(state, payload){ state.appSettings.user.adAccount.inITS = payload.inITS; },     //set_user_isLoading_adAccount(state, payload){ state.appSettings.user.adAccount.isLoading = payload.isLoading; },
+        set_keepInactive(state){
+            state.list.props.wsProps.forms.keepInactive = true;
+            state.list.props.wsProps.records.keepInactive = true;
+            state.list.props.wsProps.valSets.keepInactive = true;
+            state.list.props.wsProps.vsOptions.keepInactive = true;
+            state.build.props.wsProps.vsOptions.keepInactive = true;
+            //state.entry.props.wsProps.vsOptions.keepInactive = true;
+        },
+
     },
-    setServerDown(newVal, checktime){
-        // don't set if already set by more recent post
-        if(!this.state.connections.serverChecktime || checktime.isAfter(this.state.connections.serverChecktime)){
-            this.state.connections.serverChecktime = checktime;
-            if(this.state.connections.serverDown != newVal) this.state.connections.serverDown = newVal;
-        }
-    },
-    setConnectionsOnCheckReturn(checktime){
-        this.setUnsentReq(false, checktime);
-        if(this.state.connections.checkServer){
-            this.setServerDown(false, checktime);
-            this.state.connections.checkServer = false;
-        }
-    },
-    setConnectionsOnCheckFail(postData, checktime){
-        // readyState 0: unsent (no internet, netmotion connected)
-        if(postData.readyState == 0) this.setUnsentReq(true, checktime);
-        else{
-            this.setUnsentReq(false, checktime);
-            if(this.state.connections.checkServer){
-                this.setServerDown(true, checktime);
-                this.state.connections.checkServer = false;
-            }
-        }
-    },
-    /*setConnectionsOnWSReturn(checktime){
-        //if(this.sharedState.connections.unsentReq) this.setUnsentReq(false, checktime);   // only checkConnection sets unsentReq = false
-        if(this.sharedState.connections.serverDown) this.setServerDown(false, checktime);
-    },*/
-    setConnectionsOnWSFail(postData, checktime){
-        // readyState 0: unsent (no internet, netmotion connected)
-        if(postData.readyState == 0 && !this.state.connections.unsentReq) this.setUnsentReq(true, checktime);
-        // flag so next check connection will query server to confirm server is not down
-        else if(postData.readyState != 0) this.state.connections.checkServer = true;
-    },
+/* MUTATIONS */
 
-    switchNightView(){
-        this.state.nightView = !this.nightView;
-    },
 
-/* ADD TO LIVE */
-    setUser(payload){
-        var loadDate = null;
-        var token = null, email = null;
-        if (payload.hasOwnProperty('token') && payload.token) token = payload.token;
-        if(payload.hasOwnProperty('email') && payload.email) email = payload.email;
-        //if(payload.hasOwnProperty('firstName') && payload.firstName) firstName = payload.firstName;
-
-        if(payload.hasOwnProperty('loadDate') && payload.loadDate) loadDate = payload.loadDate;
-        else loadDate = moment();
-
-        if(token || email){
-            // compare, don't set is loading again if uneeded
-            if(!(this.state.user.token) || this.state.user.token != token){
-                this.state.user._isLoading.token = true;
-                this.state.user._isLoading.email = true;
-                this.state.user._isLoading.adAccount = true;
-                this.state.user._lastLoad.token = loadDate;
-                this.state.user.token = token;
-
-                if (this.debug) console.log("USER TOKEN SET: " + token);
-                this.state.user._isLoading.token = false;
-            }
-            if(!(this.state.user.email) || this.state.user.email != email){
-                this.state.user._lastLoad.email = loadDate;
-                this.state.user.email = email;
-
-                if (this.debug) console.log("USER EMAIL SET: " + email);
-                this.state.user._isLoading.email = false;
-            }
-        }
-    },
-    setUserADAccount(adData, loadDate){
-        var fName = null, lName = null, accountName = null, inITS = false, loadDate = null;
-        if(!loadDate) loadDate = moment();
-
-        if(adData.length && adData.length == 1){
-            if(adData[0].hasOwnProperty('givenName') && adData[0].givenName && adData[0].hasOwnProperty('sn') && adData[0].sn && adData[0].hasOwnProperty('sAMAccountName') && adData[0].sAMAccountName && adData[0].hasOwnProperty('description') && adData[0].description){
-                this.state.user._lastLoad.adAccount = loadDate;
-
-                fName = adData[0].givenName;
-                lName = adData[0].sn;
-                accountName = adData[0].sAMAccountName;
-
-                if(!(this.state.user.firstName) || this.state.user.firstName != fName){
-                    this.state.user.firstName = fName;
-                    if(this.debug) console.log("USER FIRST NAME SET: " + fName);
+/* ACTIONS */
+    actions:{
+    /* APP SETTINGS */
+        update_unsentReq({ getters, commit, state }, payload){ // payload = { unsentReq, checktime }
+            if(payload.hasOwnProperty('unsentReq') && payload.hasOwnProperty('checktime') && payload.checktime){
+                if(!getters.connection_checktime('unsent') || payload.checktime.isAfter(getters.connection_checktime('unsent'))){         //var storePayload = {checkTime: payload.checkTime};        //commit('set_unsentChecktime', payload);
+                    if(state.appSettings.connections.unsentReq === payload.unsentReq) delete payload.unsentReq;                                          //storePayload = Object.assign(storePayload, {unsentReq: payload.unsentReq});    //commit('set_unsentReq', payload);
+                    commit('set_unsent', payload);                                                                                                      //commit('set_unsent', storePayload);
                 }
-                if(!(this.state.user.lastName) || this.state.user.lastName != lName){
-                    this.state.user.lastName = lName;
-                    if(this.debug) console.log("USER LAST NAME SET: " + lName);
+            } else if(state.errDebug) console.error("ERROR: update_unsentReq:\t\tpayload - " + JSON.stringify(payload));
+        },
+        update_serverDown({ getters, commit, state }, payload){ // payload = { serverDown, checktime }
+            if(payload.hasOwnProperty('serverDown') && payload.hasOwnProperty('checktime') && payload.checktime){
+                if(!getters.connection_checktime('server') || payload.checktime.isAfter(getters.connection_checktime('server'))){             //var storePayload = {checkTime: payload.checkTime};  //commit('set_serverChecktime', payload);
+                    if(state.appSettings.connections.serverDown === payload.serverDown) delete payload.serverDown;                                           //Object.assign(storePayload, {serverDown: payload.serverDown});     //commit('set_serverDown', payload);
+                    commit('set_unsent', payload);                                                                                                          //commit('set_unsent', storePayload);
                 }
-                if(!(this.state.user.username) || this.state.user.username != accountName){
-                    this.state.user.username = accountName;
+            } else if(state.errDebug) console.error("ERROR: update_serverDown:\t\tpayload - " + JSON.stringify(payload));
+        },
+        updateConnections_fromCheck({ dispatch, commit, state }, payload){ // payload = { checktime }
+            if(payload.hasOwnProperty('status') && (payload.status == 'success' || payload.status == 'fail')){
+                if( payload.hasOwnProperty('checktime') && payload.checktime && (payload.status == 'success' || (payload.status == 'fail' && payload.hasOwnProperty('postData') && payload.postData)) ){
+                    var storePayload = Object.assign({}, payload, {unsentReq: false, serverDown: false, checkServer: false });
+                    if(payload.status == 'fail'){
+                        if(payload.postData.readyState == 0) storePayload.unsentReq = true;
+                        else storePayload.serverDown = true;
+                    }
+                    dispatch('update_unsentReq', storePayload);
+                    if(state.appSettings.connections.checkServer){
+                        dispatch('update_serverDown', storePayload);
+                        commit('set_checkServer', storePayload);
+                    }
+                } else if(state.errDebug) console.error("ERROR: updateConnectionsOnCheckReturn:\t\tpayload - " + JSON.stringify(payload));
+            } else if(state.errDebug) console.error("ERROR: updateConnectionsOnCheckReturn:\t\tpayload - no status - " + JSON.stringify(payload));
+        },
+        updateConnections_fromWSFail({ dispatch, commit, state }, payload){    // payload = { postData, checktime }
+            if(payload.hasOwnProperty('postData') && payload.postData && payload.hasOwnProperty('checktime') && payload.checktime){
+                var storePayload = {checkTime: payload.checkTime, unsentReq: true, serverDown: false, checkServer: true };
+                if(payload.postData.readyState == 0) dispatch('update_unsentReq', storePayload);       // readyState 0: unsent (no internet, netmotion connected)
+                else if(payload.postData.readyState != 0) commit('set_checkServer', storePayload);                // flag so next check connection will query server to confirm server is not down
+            } else if(state.errDebug) console.error("ERROR: updateConnectionsOnWSFail:\t\tpayload - " + JSON.stringify(payload));
+        },
+        updateUserOauth({ getters, dispatch, commit, state }, payload){      // payload = { loadDate, (token and/or email) }
+            if( ( (payload.hasOwnProperty('token') && payload.token) || (payload.hasOwnProperty('email') && payload.email) ) && payload.hasOwnProperty('loadDate') && payload.loadDate ){
+                if(payload.hasOwnProperty('token') && payload.token){   // compare, don't set is loading again ifuneeded
+                    if(!getters.user_loadDate('token') || payload.loadDate.isAfter(getters.user_loadDate('token'))){
+                        if(state.appSettings.user.token.val == payload.token) delete payload.token;
+                        commit('set_user_token', payload);
+                    }
                 }
+                if(payload.hasOwnProperty('email') && payload.email){
+                    if(!getters.user_loadDate('email') || payload.loadDate.isAfter(getters.user_loadDate('email'))){
+                        if(state.appSettings.user.email.val == payload.email) delete payload.email;
+                        commit('set_user_email', payload);
+                    }
+                }
+            } else if(state.errDebug) console.error("ERROR: updateUserOauth:\t\tpayload - " + JSON.stringify(payload));
+        },
+        update_userADAccount({ getters, commit, state }, payload){ // payload = {adData, loadDate}
+            if( payload.hasOwnProperty('loadDate') && payload.loadDate ){
+                var storePayload = Object.assign({firstName: null, lastName: null, username: null, inITS: false}, payload);
+                if(!getters.user_loadDate('adAccount') || payload.loadDate.isAfter(getters.user_loadDate('adAccount'))){
+                    if(storePayload.firstName === user_firstName) delete storePayload.firstName;
+                    if(storePayload.lastName === user_lastName) delete storePayload.lastName;
+                    if(storePayload.username === user_username) delete storePayload.username;
+                    if(storePayload.inITS === user_inITS) delete storePayload.inITS;
+                    commit('set_user_adAccount', storePayload);
+                }
+            } else if(state.errDebug) console.error("ERROR: updateUserADAccount:\t\tpayload - " + JSON.stringify(payload));
+        },
+        evaluateADAccountReturn({ dispatch, commit, state }, payload){ // payload = {adData, loadDate}
+            if( payload.hasOwnProperty('adData') && payload.adData && payload.hasOwnProperty('loadDate') && payload.loadDate){
+                var storePayload = {loadDate: payload.loadDate, firstName: null, lastName: null, username: null, inITS: false};
+                if(payload.adData.length == 1){
+                    if(payload.adData[0].hasOwnProperty('givenName') && payload.adData[0].givenName) storePayload.firstName = payload.adData[0].givenName;
+                    if(payload.adData[0].hasOwnProperty('sn') && payload.adData[0].sn) storePayload.lastName = payload.adData[0].sn;
+                    if(payload.adData[0].hasOwnProperty('sAMAccountName') && payload.adData[0].sAMAccountName) storePayload.username = payload.adData[0].sAMAccountName;
+                    if(payload.adData[0].hasOwnProperty('description') && payload.adData[0].description){
+                        if(payload.adData[0].description == 'ITS'){
+                            storePayload.inITS = true;
+                            commit('set_keepInactive');
+                        }
+                    }
+                    dispatch('update_userADAccount', storePayload);
+                } else if(state.errDebug) console.error("ERROR: setUserADAccount:\t\tpayload - AD Return Data - " + JSON.stringify(payload));
+            } else if(state.errDebug) console.error("ERROR: updateUserADAccount:\t\tpayload - " + JSON.stringify(payload));
+        },
 
-                if(adData[0].description == 'ITS'){
-                    this.state.user.inITS = true;
-                    if(this.debug) console.log("USER IN ITS");
-                    this.state.datatables.settings.recordsList.wsProps.keepInactive = true;
-                    this.setUserIsDev();
-                }
-                else this.state.user.inITS = false;
+
+    },
+
+/* TABLE SETTINGS */
+    setTableSettings: function(payload){
+        var returnVal = false;
+        var tableSettings = this.getTableSettings(payload);
+        if(tableSettings){
+            returnVal = true;
+            if(payload.hasOwnProperty('searchStr')) tableSettings.searchStr = payload.searchStr;
+            if(payload.hasOwnProperty('sortBy')) tableSettings.sortBy = payload.sortBy;
+            if(payload.hasOwnProperty('sortDesc')) tableSettings.sortDesc = payload.sortDesc;
+            if(payload.hasOwnProperty('showInactive')) tableSettings.showInactive = payload.showInactive;
+            if(payload.hasOwnProperty('showDetails')) tableSettings.showDetails = payload.showDetails;
+            if(payload.hasOwnProperty('showIDCol')) tableSettings.showIDCol = payload.showIDCol;
+            if(payload.hasOwnProperty('showColFilters')) tableSettings.showColFilters = payload.showColFilters;
+            if(payload.hasOwnProperty('perPage')) tableSettings.perPage = payload.perPage;
+
+            if(payload.hasOwnProperty('deptID')){
+                if(tableSettings.hasOwnProperty('deptID')) tableSettings.deptID = payload.deptID;
+                else if(this.state.errDebug) console.error("ERROR: setTableSettings:\t\tpayload has deptID by no deptID on store settings:" + this.payloadToStr(payload));
             }
-            else{
-                if(this.warnDebug) console.warn("WARNING: setUserADAccount:\t\tAll properties not returned");
-                this.state.user.firstName = null;
-                this.state.user.lastName = null;
-                this.state.user.username = null;
-                this.state.user.inITS = false;
+            if(payload.hasOwnProperty('formID')){
+                if(tableSettings.hasOwnProperty('formID')) tableSettings.formID = payload.formID;
+                else if(this.state.errDebug) console.error("ERROR: setTableSettings:\t\tpayload has formID by no formID on store settings:" + this.payloadToStr(payload));
+            }
+            
+            if(payload.hasOwnProperty('wsProps') && payload.wsProps) this.setWSProps(payload);
+        };
+        return returnVal;
+    },
+    setWSProps: function(payload){
+        var returnVal = false;
+        //if(payload.hasOwnProperty('stateName') && payload.stateName) stateName = payload.stateName;
+
+        var wsProps = this.getWSProps(payload);
+        if(wsProps){
+            returnVal = true;
+            if(payload.hasOwnProperty('count')) wsProps.count = payload.count;
+            if(payload.hasOwnProperty('date')) wsProps.historicalSearch = payload.date;
+            if(payload.hasOwnProperty('start')) wsProps.historicalSearchStart = payload.start;
+            if(payload.hasOwnProperty('end')) wsProps.historicalSearchEnd = payload.end;
+            if(payload.hasOwnProperty('column')) wsProps.historicalSearchColumn = payload.column;
+            if(payload.hasOwnProperty('keepInactive')) wsProps.keepInactive = payload.keepInactive;
+            if(payload.hasOwnProperty('onlyInactive')) wsProps.onlyInactive = payload.onlyInactive;
+
+            if(payload.hasOwnProperty('formID')){
+                if(wsProps.hasOwnProperty('formID')) wsProps.formID = payload.formID;
+                else if(this.state.errDebug) console.error("ERROR: setWSProps:\t\tpayload has formID by no formID on store wsProps:" + this.payloadToStr(payload));
             }
         }
-        else{
-            if(this.errDebug && adData.length && adData.length > 1) console.error("ERROR: setUserADAccount:\t\tMore than one account returned");
-            else if(this.errDebug) console.error("ERROR: setUserADAccount:\t\tNO DATA");
-            this.state.user._lastLoad.adAccount = loadDate;
-            this.state.user.firstName = null;
-            this.state.user.lastName = null;
-            this.state.user.username = null;
-            this.state.user.inITS = false;
-        }
-        this.state.user._isLoading.adAccount = false;
+        else if(this.state.errDebug) console.error("ERROR: setWSProps:\t\tpayload - storename - " + this.payloadToStr(payload));
+        return returnVal;
     },
-    setUserIsDev(){
-        this.state.datatables.settings.formsList.wsProps.keepInactive = true;
-        this.state.datatables.settings.recordsList.wsProps.keepInactive = true;
-        this.state.datatables.settings.valSetsList.wsProps.keepInactive = true;
-    },
-    getUserIsLoading(){
-        return this.state.user._isLoading.token || this.state.user._isLoading.email || this.state.user._isLoading.adAccount;
-    },
-    getUserIsDev(){
-        if(!this.state.user._isLoading.adAccount) return this.state.user.inITS;
-    },
-    getUsername(){
-        if(!this.state.user._isLoading.adAccount) return this.state.user.username;
-    },
-    getUserEmail(){
-        if(!this.state.user._isLoading.email) return this.state.user.email;
-    },
-    getUserEmailShort(){
-        var email;
-        if(!this.state.user._isLoading.email && this.state.user.email){
-            email = this.state.user.email;
-            return email.substring(0, email.indexOf('@'));
-        }
-    },
-    getUserFirstName(){
-        if(!this.state.user._isLoading.adAccount) return this.state.user.firstName;
-    },
+
+
+
+
 
 
 /* ISLOADING + LOAD DATE */
 
+    getIsLoading(payload){
+        var route = null;
+        var stateName = null;
+        var storeName = null;
+        if(payload.hasOwnProperty('storeName')) storeName = payload.storeName;
+            if(payload.hasOwnProperty('stateName')) stateName = payload.stateName;
+            else if(payload.has)
+    },
     setLastChange(changetime){
         if(!this.state.lastChange || changetime.isAfter(this.state.lastChange)) this.state.lastChange = changetime;
     },
@@ -334,9 +365,9 @@ var store = {
         }
         /*else{
             if(payload.hasOwnProperty('loadDate') && payload.loadDate) loadDate = payload.loadDate;
-            else {
+            else{
                 loadDate = moment();
-                if(this.warnDebug) console.warn("WARNING: setStoreIsLoading:\t\tload date not sent");
+                if(this.state.warnDebug) console.warn("WARNING: setStoreIsLoading:\t\tload date not sent");
             }
             newPayload = Object.assign({}, payload, {loadDate: loadDate});
         }*/
@@ -344,17 +375,17 @@ var store = {
         if(payload.hasOwnProperty('stateName')) stateName = payload.stateName;
         if(payload.hasOwnProperty('storeName')) storeName = payload.storeName;
 
-        // set store itself as loading if neither stateName nor storeName is sent, do before to ensure mistakes don't set store loading
+        // set store itself as loading ifneither stateName nor storeName is sent, do before to ensure mistakes don't set store loading
         if(!stateName && !storeName){
             this.state.isLoading = isLoading;
         }
         else if(!storeName){
             if(this.state.hasOwnProperty(stateName)) this.state[stateName].isLoading = isLoading;
-            else if(this.errDebug) console.error("ERROR: setStoreIsLoading:\t\tstateName DNE - " + stateName);
+            else if(this.state.errDebug) console.error("ERROR: setStoreIsLoading:\t\tstateName DNE - " + stateName);
         }
         else{
             if(this.state[stateName]._isLoading.hasOwnProperty(storeName)) this.state[stateName]._isLoading[storeName] = isLoading;
-            else if(this.errDebug) console.error("ERROR: setStoreIsLoading:\t\t_isLoading not setup for storeName - " + this.payloadToStr(payload));
+            else if(this.state.errDebug) console.error("ERROR: setStoreIsLoading:\t\t_isLoading not setup for storeName - " + this.payloadToStr(payload));
         }
 
         if(!isLoading && loadDate) this.setStoreLoadDate(payload)
@@ -365,15 +396,15 @@ var store = {
         var dataObj;
 
         if(payload.hasOwnProperty('loadDate') && payload.loadDate) loadDate = payload.loadDate;
-        else {
+        else{
             loadDate = moment();
-            if(this.warnDebug) console.warn("WARNING: setStoreLoadDate:\t\tload date not sent");
+            if(this.state.warnDebug) console.warn("WARNING: setStoreLoadDate:\t\tload date not sent");
         }
 
         if(payload.hasOwnProperty('stateName')) stateName = payload.stateName;
         if(payload.hasOwnProperty('storeName')) storeName = payload.storeName;
 
-        // set store itself as loading if neither stateName nor storeName is sent, do before to ensure mistakes don't set store loading
+        // set store itself as loading ifneither stateName nor storeName is sent, do before to ensure mistakes don't set store loading
         if(!stateName || !storeName){
             if(!this.state.loadDate) this.state.lastLoad = loadDate;
             else{
@@ -389,7 +420,7 @@ var store = {
                     //moDiff = this.state[stateName].lastLoad.diff(loadDate); if(moDiff < 0) this.state[stateName].lastLoad = loadDate;
                 }
             }
-            else if(this.errDebug) console.error("ERROR: setStoreLoadDate:\t\tstateName DNE - " + stateName);
+            else if(this.state.errDebug) console.error("ERROR: setStoreLoadDate:\t\tstateName DNE - " + stateName);
         }
         else{
             if(this.state[stateName]._lastLoad.hasOwnProperty(storeName)){
@@ -399,104 +430,8 @@ var store = {
                     //moDiff = this.state[stateName]._lastLoad[storeName].diff(loadDate); if(moDiff < 0) this.state[stateName]._lastLoad[storeName] = loadDate;
                 }
             }
-            else if(this.errDebug) console.error("ERROR: setStoreLoadDate:\t\t_loadDate not setup for storeName - " + this.payloadToStr(payload));
+            else if(this.state.errDebug) console.error("ERROR: setStoreLoadDate:\t\t_loadDate not setup for storeName - " + this.payloadToStr(payload));
         }
-    },
-
-/* TABLE SETTINGS */
-    getTableSettings: function(payload){
-        var tableSettings = null;
-         if(payload.hasOwnProperty('storeName')){
-            if(this.state.datatables.settings.hasOwnProperty(payload.storeName)){
-                tableSettings = this.state.datatables.settings[payload.storeName];
-            }
-        }
-        else if (this.errDebug) console.error("ERROR: getTableSettings:\t\tpayload - storename - " + this.payloadToStr(payload));
-        return tableSettings;
-    },
-    setTableSettings: function(payload){
-        var returnVal = false;
-        var tableSettings = this.getTableSettings(payload);
-        if(tableSettings){
-            returnVal = true;
-
-            if(payload.hasOwnProperty('showInactive')) tableSettings.showInactive = payload.showInactive;
-            if(payload.hasOwnProperty('showDetails')) tableSettings.showDetails = payload.showDetails;
-            if(payload.hasOwnProperty('showIDCol')) tableSettings.showIDCol = payload.showIDCol;
-            if(payload.hasOwnProperty('showColFilters')) tableSettings.showColFilters = payload.showColFilters;
-            if(payload.hasOwnProperty('perPage')) tableSettings.perPage = payload.perPage;
-
-            // param specific
-            if(payload.hasOwnProperty('searchStr') || payload.hasOwnProperty('sortBy') || payload.hasOwnProperty('sortDesc')){
-                if(payload.hasOwnProperty('formID')){
-                    if(tableSettings.hasOwnProperty('formID')){
-                        tableSettings.formID = payload.formID;
-                        if(payload.hasOwnProperty('searchStr')) tableSettings.searchStr = payload.searchStr;
-                        if(payload.hasOwnProperty('sortBy')) tableSettings.sortBy = payload.sortBy;
-                        if(payload.hasOwnProperty('sortDesc')) tableSettings.sortDesc = payload.sortDesc;
-                    }
-                    else if(this.errDebug) console.error("ERROR: setTableSettings:\t\tpayload has formID by no formID on store settings:" + this.payloadToStr(payload));
-                }
-            }
-
-            if(payload.hasOwnProperty('deptID')){
-                if(tableSettings.hasOwnProperty('deptID')) tableSettings.deptID = payload.deptID;
-                else if(this.errDebug) console.error("ERROR: setTableSettings:\t\tpayload has deptID by no deptID on store settings:" + this.payloadToStr(payload));
-            }
-            
-            if(payload.hasOwnProperty('wsProps') && payload.wsProps) this.setWSProps(payload);
-        };
-        return returnVal;
-    },
-    getWSProps: function(payload){
-        var wsProps = null;
-        if(payload.hasOwnProperty('storeName')){
-            if(this.state.datatables.settings.hasOwnProperty(payload.storeName) && this.state.datatables.settings[payload.storeName].hasOwnProperty('wsProps')){
-                wsProps = this.state.datatables.settings[payload.storeName].wsProps;
-            }
-        }
-        else if (this.errDebug) console.error("ERROR: getWSProps:\t\tpayload - storename - " + this.payloadToStr(payload));
-        return wsProps;
-    },
-    setWSProps: function(payload){
-        var returnVal = false;
-        //if (payload.hasOwnProperty('stateName') && payload.stateName) stateName = payload.stateName;
-        if(this.debug) console.log('setWSProps')
-
-        var wsProps = this.getWSProps(payload);
-        if(this.debug) console.log(wsProps)
-        if(wsProps){
-            returnVal = true;
-            if (payload.hasOwnProperty('count')) wsProps.count = payload.count;
-            if (payload.hasOwnProperty('date')) wsProps.historicalSearch = payload.date;
-            if (payload.hasOwnProperty('start')) wsProps.historicalSearchStart = payload.start;
-            if (payload.hasOwnProperty('end')) wsProps.historicalSearchEnd = payload.end;
-            if (payload.hasOwnProperty('column')) wsProps.historicalSearchColumn = payload.column;
-            if (payload.hasOwnProperty('keepInactive')) wsProps.keepInactive = payload.keepInactive;
-            if (payload.hasOwnProperty('onlyInactive')) wsProps.onlyInactive = payload.onlyInactive;
-
-            if(payload.hasOwnProperty('formID')){
-                if(wsProps.hasOwnProperty('formID')) wsProps.formID = payload.formID;
-                else if(this.errDebug) console.error("ERROR: setWSProps:\t\tpayload has formID by no formID on store wsProps:" + this.payloadToStr(payload));
-            }
-        }
-        return returnVal;
-    },
-
-    setReturnFormID(formID){
-        if(this.debug) console.log('setReturnFormID')
-        this.state.datatables.recordsList_formID = formID;
-    },
-    getStoreHasData(payload){
-        var stateName = 'datatables', storeName = null
-        if(payload.hasOwnProperty('storeName')) storeName = payload.storeName;
-        if(storeName == 'recordsList'){
-            var wsProps = this.getWSProps(payload);
-            if(wsProps){
-                return (this.state[stateName].settings[storeName].wsProps.formID == this.state[stateName].recordsList_formID); 
-            }
-        }
-        else return true;
     },
 
 /* STORE/DATA OBJ(S) - GETS */
@@ -512,20 +447,20 @@ var store = {
         var stateName = 'form';
         var tableID;
 
-        if (payload.hasOwnProperty('stateName') && payload.stateName) stateName = payload.stateName;
+        if(payload.hasOwnProperty('stateName') && payload.stateName) stateName = payload.stateName;
 // comment out eventually
-        else if (payload.hasOwnProperty('isOrig') && payload.isOrig) stateName = 'database';
+        else if(payload.hasOwnProperty('isOrig') && payload.isOrig) stateName = 'database';
 
-        if (payload.hasOwnProperty('storeName')){
+        if(payload.hasOwnProperty('storeName')){
 
             // confirm storeName exists
             if(this.state[stateName].hasOwnProperty(payload.storeName)){
-                // if id was included sent
+                // ifid was included sent
                 if( payload.hasOwnProperty('id') && payload.id ){
                     tableID = this.getStoreTableID(payload);
                     if(tableID){
                         dataObj = this.state[stateName][payload.storeName].find(function(o){
-                            // if item is object, compare to val property [updated version, for more detail per field (properites)]
+                            // ifitem is object, compare to val property [updated version, for more detail per field (properites)]
                             if(typeof(o[tableID]) === 'object') return o[tableID].val == payload.id;
                             else return o[tableID] == payload.id;
                         });
@@ -535,9 +470,9 @@ var store = {
                     dataObj = this.state[stateName][payload.storeName];
                 }
             }
-            else if (this.errDebug) console.error("ERROR: getDataObj:\t\tobject does not exist - " + this.payloadToStr(payload));
+            else if(this.state.errDebug) console.error("ERROR: getDataObj:\t\tobject does not exist - " + this.payloadToStr(payload));
         }
-        else if (this.errDebug) console.error("ERROR: getDataObj:\t\tpayload - storename - " + this.payloadToStr(payload));
+        else if(this.state.errDebug) console.error("ERROR: getDataObj:\t\tpayload - storename - " + this.payloadToStr(payload));
 
         return dataObj;
     },
@@ -548,7 +483,7 @@ var store = {
         var storeObjs, filteredStoreObjs = [], filterProps;
 
         if(payload.hasOwnProperty('props') && payload.props) filterProps = Object.keys(payload.props);
-        if(payload.hasOwnProperty('id') && payload.id && this.warnDebug) console.warn('WARNING: getArrDataObjs:\t\tid sent in payload - ' + this.payloadToStr(paylod))
+        if(payload.hasOwnProperty('id') && payload.id && this.state.warnDebug) console.warn('WARNING: getArrDataObjs:\t\tid sent in payload - ' + this.payloadToStr(paylod))
 
         storeObjs = this.getDataObj(payload);
         if(storeObjs && Array.isArray(storeObjs)){
@@ -557,7 +492,7 @@ var store = {
                 filteredStoreObjs = storeObjs.filter(function(obj){
                     var keepObj = true;
 
-                    // exclude if inctive by default, unless keepInactive is in payload
+                    // exclude ifinctive by default, unless keepInactive is in payload
                     if(!(payload.hasOwnProperty('keepInactive') && payload.keepInactive)){
                         if(obj.hasOwnProperty('Active')){
                             if(typeof(obj.Active) === "object" && !(obj.Active.val)) keepObj = false;
@@ -575,7 +510,7 @@ var store = {
                                 if(typeof(obj[prop]) === "object" && obj[prop].val != payload.props[prop]) return true;
                                 else if(typeof(obj[prop]) !== "object" && obj[prop] != payload.props[prop]) return true;
                             }
-                            else if (this.errDebug) console.error('ERROR: getArrDataObjs:\t\tarray obj missing prop - ' + prop);
+                            else if(this.state.errDebug) console.error('ERROR: getArrDataObjs:\t\tarray obj missing prop - ' + prop);
                             return false;
                         });
                         if(excl) keepObj = false;
@@ -583,9 +518,9 @@ var store = {
                     return keepObj;
                 });
             }
-            else if (this.warnDebug) console.warn('WARNING: getArrDataObjs:\t\tobject array has no values - ' + this.payloadToStr(payload));
+            else if(this.state.warnDebug) console.warn('WARNING: getArrDataObjs:\t\tobject array has no values - ' + this.payloadToStr(payload));
         }
-        else if (this.errDebug) console.error('ERROR: getArrDataObjs:\t\tobject is not an arrary - ' + this.payloadToStr(payload));
+        else if(this.state.errDebug) console.error('ERROR: getArrDataObjs:\t\tobject is not an arrary - ' + this.payloadToStr(payload));
 
         return filteredStoreObjs;
     },
@@ -598,15 +533,15 @@ var store = {
         if(payload.hasOwnProperty('storeName') && (payload.hasOwnProperty('propname')) ){
             dataObj = this.getDataObj(payload);
 
-            if (dataObj && dataObj.hasOwnProperty(payload.propname)){
+            if(dataObj && dataObj.hasOwnProperty(payload.propname)){
                 objProp =  dataObj[payload.propname];    
             }
-            else if (dataObj && !(dataObj.hasOwnProperty(payload.propname)) && this.errDebug) {
-                if (this.errDebug) console.error('ERROR: getObjProp:\t\tproperty does not exist - ' + this.payloadToStr(payload));
-                if (this.errDebug) console.log(dataObj);
+            else if(dataObj && !(dataObj.hasOwnProperty(payload.propname)) && this.state.errDebug) {
+                if(this.state.errDebug) console.error('ERROR: getObjProp:\t\tproperty does not exist - ' + this.payloadToStr(payload));
+                if(this.state.errDebug) console.log(dataObj);
             }
         }
-        else if (this.errDebug) console.error('ERROR: getObjProp:\t\tpayload - ' + this.payloadToStr(payload));
+        else if(this.state.errDebug) console.error('ERROR: getObjProp:\t\tpayload - ' + this.payloadToStr(payload));
 
         return objProp;
     },
@@ -617,15 +552,15 @@ var store = {
     getStoreTableID(payload){ // payload = {storeName (req)};
         var tableID;
 
-        if (payload.hasOwnProperty('storeName') && payload.storeName){
+        if(payload.hasOwnProperty('storeName') && payload.storeName){
             if(this.state.tableIDs.hasOwnProperty(payload.storeName) && this.state.tableIDs[payload.storeName]){
                 tableID = this.state.tableIDs[payload.storeName]
                 // DON'T USE RECORDNUMBER
                 if(payload.storeName == 'recordsList') tableID = 'ID';
             }
-            else if (this.errDebug) console.error("ERROR: getStoreTableID:\t\ttableID not found for store - " + this.payloadToStr(payload));
+            else if(this.state.errDebug) console.error("ERROR: getStoreTableID:\t\ttableID not found for store - " + this.payloadToStr(payload));
         }
-        else if (this.errDebug) console.error("ERROR: getStoreTableID:\t\tpayload - storename - " + this.payloadToStr(payload));
+        else if(this.state.errDebug) console.error("ERROR: getStoreTableID:\t\tpayload - storename - " + this.payloadToStr(payload));
 
         return tableID;
     },
@@ -639,12 +574,12 @@ var store = {
             if(!storeObj || (Array.isArray(storeObj) && storeObj.length == 0)){
                 minID = 0;
             }
-            else if (Array.isArray(storeObj)){ 
+            else if(Array.isArray(storeObj)){ 
                 minID = storeObj.reduce(function(min, dataObj){
                     return dataObj[tableID] < min ? dataObj[tableID] : min;
                 }, 0);
             }
-            else if (this.errDebug) console.error("ERROR: getMinTableID:\t\t???");
+            else if(this.state.errDebug) console.error("ERROR: getMinTableID:\t\t???");
         }
         return minID;
     },
@@ -653,17 +588,17 @@ var store = {
     getStoreOrderID(payload){ // payload = {storeName (req)};
         var orderID;
 
-        if (payload.hasOwnProperty('storeName') && payload.storeName){
+        if(payload.hasOwnProperty('storeName') && payload.storeName){
             if(this.state.orderIDs.hasOwnProperty(payload.storeName) && this.state.orderIDs[payload.storeName]){
                 orderID = this.state.orderIDs[payload.storeName]
             }
-            else if (this.warnDebug) console.warn("WARNING: getStoreOrderID:\t\torderID not found for store - " + this.payloadToStr(payload));
+            else if(this.state.warnDebug) console.warn("WARNING: getStoreOrderID:\t\torderID not found for store - " + this.payloadToStr(payload));
         }
-        else if (this.errDebug) console.error("ERROR: getStoreOrderID:\t\tpayload - storename - " + this.payloadToStr(payload));
+        else if(this.state.errDebug) console.error("ERROR: getStoreOrderID:\t\tpayload - storename - " + this.payloadToStr(payload));
 
         return orderID;
     },
-    // storeObjs must be array, will be filtered if props are in payload
+    // storeObjs must be array, will be filtered ifprops are in payload
     getMaxOrder(payload){ // payload = {storeName (req)};
         var orderID, maxOrder = 0, storeObjs;
 
@@ -678,7 +613,7 @@ var store = {
         }
         return maxOrder;
     },
-    // storeObjs will be filtered if props are in payload
+    // storeObjs will be filtered ifprops are in payload
     getMinOrder(payload){ // payload = {storeName (req)};
         var orderID, minOrder = 0, storeObjs;
 
@@ -723,8 +658,8 @@ var store = {
                     Object.assign(updateObj, payload.valObj);
 
                     compareResult = this.compareColValObjs(updateObj, compObj, false);
-                    //if (this.debug) console.log(compareResult);
-                    if (compareResult != 0){
+                    //if(this.state.debug) console.log(compareResult);
+                    if(compareResult != 0){
                         updateObj.updateDB = true;
                     }
                     else if(compareResult == 0){
@@ -739,11 +674,11 @@ var store = {
                     updateObj.updateDB = true;
                     returnVal = updateObj.displayVal;
                 }
-            } else if (this.errDebug) console.error('ERROR: updateObjProp: No Form Object - ' + this.payloadToStr(payload));
-        } else if (this.errDebug) console.error('ERROR: updateObjProp: PAYLOAD - ' + this.payloadToStr(payload));
+            } else if(this.state.errDebug) console.error('ERROR: updateObjProp: No Form Object - ' + this.payloadToStr(payload));
+        } else if(this.state.errDebug) console.error('ERROR: updateObjProp: PAYLOAD - ' + this.payloadToStr(payload));
 
         /*if(err){
-            if (this.errDebug) console.log('ERROR: updateObjProp: PAYLOAD - ' + this.payloadToStr(payload));
+            if(this.state.errDebug) console.log('ERROR: updateObjProp: PAYLOAD - ' + this.payloadToStr(payload));
             NEED TO DO SOMETHING HERE 
         }*/
 
@@ -774,7 +709,7 @@ var store = {
                     val = newVal.toString().toUpperCase();
                 }
                 else if(editField.valType == 'boolean'){
-                    if (currVal == true || currVal == 1){
+                    if(currVal == true || currVal == 1){
                         val = true;
                     }
                     else{
@@ -782,7 +717,7 @@ var store = {
                     }
                     displayVal = val ? 'true' : 'false';
                 }
-                else if (editField.valType == 'combobox'){
+                else if(editField.valType == 'combobox'){
                     var subset, valObj;
                     var joinSet = editField.JoinSet;
                     if(joinSet){
@@ -803,24 +738,24 @@ var store = {
                                     else displayVal = valObj[editField.TextProp];
                                 }
                                 else{
-                                    if(this.errDebug) console.error('ERROR: getValObj - NOT FOUND IN STATE.' + subset + '.' + joinSet + ' - ' + newVal);
+                                    if(this.state.errDebug) console.error('ERROR: getValObj - NOT FOUND IN STATE.' + subset + '.' + joinSet + ' - ' + newVal);
                                 }
                             }
                         }
                         else if(newVal !== null){
-                            if(this.errDebug) console.error('ERROR: getValObj - ' + joinSet + ' NOT LOADED')
+                            if(this.state.errDebug) console.error('ERROR: getValObj - ' + joinSet + ' NOT LOADED')
                             val = newVal;
                             displayVal = newVal.toString();
                         }
                     }
-                    else {
+                    else{
                         if(self.errDebug) console.error('ERROR: getValObj - NO JOINSET SPECIFIED')
                         val = currVal;
                         displayVal = currVal.toString();
                     }
                 }
                 else{
-                    if (this.errDebug) console.error('ERROR: updateFieldInternal: TYPE NOT HANDLED - ' + this.payloadToStr(payload));
+                    if(this.state.errDebug) console.error('ERROR: updateFieldInternal: TYPE NOT HANDLED - ' + this.payloadToStr(payload));
                     /* NEED TO DO SOMETHING HERE */
                 }
             }
@@ -830,7 +765,7 @@ var store = {
             //this.updateObjectProp({storeName: payload.storeName, propname: payload.propname, valObj: newValObj});
         }
         else{
-            if (this.errDebug) console.error('ERROR: updateFieldInternal: PAYLOAD - ' + this.payloadToStr(payload));
+            if(this.state.errDebug) console.error('ERROR: updateFieldInternal: PAYLOAD - ' + this.payloadToStr(payload));
         }
     },
     updateOrderID: function(payload){
@@ -842,7 +777,7 @@ var store = {
 
         if(payload.hasOwnProperty('stateName') && payload.stateName) stateName = payload.stateName;
 
-        if (payload.hasOwnProperty('storeName') && payload.hasOwnProperty('order')){
+        if(payload.hasOwnProperty('storeName') && payload.hasOwnProperty('order')){
             dataObj = this.getDataObj(payload);
 
             arrPayload = Object.assign({}, payload, {id: null});
@@ -854,9 +789,9 @@ var store = {
                 orderID = this.getStoreOrderID(payload);
 
                 var foundOrderGreater = false;
-                // check if already exists with that order
+                // check ifalready exists with that order
                 var i = dataObj.forEach(function(s){
-                    if (s[orderID].dbVal >= payload.order){
+                    if(s[orderID].dbVal >= payload.order){
                         s[orderID].dbVal++;
                     }
                 });
@@ -889,7 +824,7 @@ var store = {
         }
 
         // check required props
-        if (payload.hasOwnProperty('storeName')){
+        if(payload.hasOwnProperty('storeName')){
             storeObj = this.getDataObj(payload);
             if(storeObj || payload.storeName == 'formData' || payload.storeName == 'formRecord'){
                 loadPayload = Object.assign({}, payload, {isLoading: true, loadDate: loadDate});
@@ -915,7 +850,7 @@ var store = {
                 if(payload.hasOwnProperty('newObj') && payload.newObj){
                     newObj = clone(payload.newObj);
                 }
-                // clone firstSection if new form (no IDs, so minID will return as 0)
+                // clone firstSection ifnew form (no IDs, so minID will return as 0)
                 else if(payload.storeName == 'formSections' && minID == 0){
                     if(this.state.default.hasOwnProperty('firstSection') && this.state.default.firstSection){
                         newObj = clone(this.state.default.firstSection);
@@ -942,7 +877,7 @@ var store = {
                                 console.log(p);
                                 self.updateFieldInternal({field: newObj[p], newValue: payload.props[p]})
                             }
-                            else if (this.warnDebug) console.warn('WARNING: addDataObj:\t\tproperty DNE - ' + p);
+                            else if(this.state.warnDebug) console.warn('WARNING: addDataObj:\t\tproperty DNE - ' + p);
                         })
                     }
                     else console.log('no props')
@@ -950,30 +885,30 @@ var store = {
                     if(payload.storeName == 'formData'){
                         if(!(this.state.form.formData)){
                             this.state.form.formData = newObj;
-                            if (this.debug) console.log('addDataObj:\t\tAdded default formData');
+                            if(this.state.debug) console.log('addDataObj:\t\tAdded default formData');
                         }
-                        else if (this.warnDebug) console.warn('WARNING: addDataObj:\t\tForm Data already exists');
+                        else if(this.state.warnDebug) console.warn('WARNING: addDataObj:\t\tForm Data already exists');
 
                     }
-                    else if (payload.storeName == 'formRecord'){
+                    else if(payload.storeName == 'formRecord'){
                         if(!(this.state.form.formRecord) || this.state.form.formRecord.length == 0){
                                 this.state.form.formRecord = newObj;
-                                if (this.debug) console.log('addDataObj:\t\tAdded default Form Record');
+                                if(this.state.debug) console.log('addDataObj:\t\tAdded default Form Record');
                         }
-                        else if (this.warnDebug) console.warn('WARNING: addDataObj:\t\tForm Record already exists');
+                        else if(this.state.warnDebug) console.warn('WARNING: addDataObj:\t\tForm Record already exists');
                     }
                     // adding to array
                     else{
-                        // if order was included in props
+                        // iforder was included in props
                         if(newOrder) newObj[orderID].dbVal = payload.order;
                         else if(!(newObj[orderID].dbVal)) newObj[orderID].dbVal = maxOrder + 1;
 
                         if(newObj[orderID].dbVal <= maxOrder_All) checkOrder = true;
 
                         if(payload.storeName != 'dialog' && checkOrder){
-                            // check if already exists with that order
+                            // check ifalready exists with that order
                             storeObj.forEach(function(dataObj){
-                                if (dataObj[orderID].dbVal >= payload.order){
+                                if(dataObj[orderID].dbVal >= payload.order){
                                     dataObj[orderID].dbVal++;
                                 }
                             });
@@ -986,12 +921,12 @@ var store = {
                     this.setStoreIsLoading(loadPayload);
                 }
                 else{
-                    if (this.errDebug) console.error("ERROR: addDataObj:\t\tdefault object does not exist - " + this.payloadToStr(payload));
+                    if(this.state.errDebug) console.error("ERROR: addDataObj:\t\tdefault object does not exist - " + this.payloadToStr(payload));
                 }
             }
-            else if (this.errDebug) console.error("ERROR: addDataObj:\t\tobject does not exist - " + this.payloadToStr(payload));
+            else if(this.state.errDebug) console.error("ERROR: addDataObj:\t\tobject does not exist - " + this.payloadToStr(payload));
         }
-        else if (this.errDebug) console.error("ERROR: addDataObj:\t\tpayload - storename - " + this.payloadToStr(payload));
+        else if(this.state.errDebug) console.error("ERROR: addDataObj:\t\tpayload - storename - " + this.payloadToStr(payload));
 
         return newObj;
     },
@@ -1019,7 +954,7 @@ var store = {
                 });
             }
             else{
-                if(this.warnDebug) console.log('no order id set');
+                if(this.state.warnDebug) console.log('no order id set');
                 return payload.arrDataObjs;
             }
         }
@@ -1027,11 +962,11 @@ var store = {
 
     setupNewForm: function(){
         var loadDate = moment();
-        if(this.debug) console.log("adding default form data");
+        if(this.state.debug) console.log("adding default form data");
         this.addDataObj({stateName: 'form', storeName: 'formData', loadDate: loadDate});
-                        // If no formSections, automatically push the default Main (first) formSection
+                        // ifno formSections, automatically push the default Main (first) formSection
         if(this.state.form.formSections.length === 0){
-            if(this.debug) console.log("adding default first section");
+            if(this.state.debug) console.log("adding default first section");
             this.addDataObj({stateName: 'form', storeName: 'formSections', loadDate: loadDate});
         }
     },
@@ -1060,9 +995,9 @@ var store = {
                     return returnVal;
                 });
             }
-            else if (this.warnDebug) console.warn('WARNING: checkFieldsInactive:\t\tobject array has no values - ' + this.payloadToStr(payload));
+            else if(this.state.warnDebug) console.warn('WARNING: checkFieldsInactive:\t\tobject array has no values - ' + this.payloadToStr(payload));
         }
-        else if (this.errDebug) console.error('ERROR: checkFieldsInactive:\t\tobject is not an arrary - ' + this.payloadToStr(payload));
+        else if(this.state.errDebug) console.error('ERROR: checkFieldsInactive:\t\tobject is not an arrary - ' + this.payloadToStr(payload));
 
         return (inactiveIndex == -1 ? false : true);
     },
@@ -1076,7 +1011,7 @@ var store = {
                     }
                     else{
                         var formDataObj = this.getDataObj(payload);
-                        if (this.state.dialog[payload.storeName].length > 0) console.error('dialog array has value')
+                        if(this.state.dialog[payload.storeName].length > 0) console.error('dialog array has value')
                         this.state.dialog[payload.storeName].push(clone(formDataObj));
                     }
 
@@ -1084,7 +1019,7 @@ var store = {
                     this.state.dialogSettings.id = payload.id;
                     this.state.dialogSettings.isOpen = true;
                 }
-                else if(this.errDebug) console.error('ERROR: setDialog - open - payload');
+                else if(this.state.errDebug) console.error('ERROR: setDialog - open - payload');
             }
             else{
                 this.state.dialogSettings.isOpen = false;
@@ -1102,7 +1037,7 @@ var store = {
         var tableID;
 
         // check required props
-        if (payload.hasOwnProperty('storeName') && payload.storeName){
+        if(payload.hasOwnProperty('storeName') && payload.storeName){
             // confirm storeName exists
             if(this.state.form.hasOwnProperty(payload.storeName)){
                 this.state.form._isLoading[payload.storeName] = true;
@@ -1119,11 +1054,11 @@ var store = {
 
                     // adding to array
                     else{
-                        // if order was included in props
+                        // iforder was included in props
                         if( payload.hasOwnProperty('order') && payload.order ){
-                            // check if already exists with that order, increase all order by 1
+                            // check ifalready exists with that order, increase all order by 1
                             var i = this.state.form[payload.storeName].findIndex(function(o){
-                                // if item is object, compare to val property [updated version, for more detail per field (properites)]
+                                // ifitem is object, compare to val property [updated version, for more detail per field (properites)]
                                 if(typeof(o[tableID]) === 'object') return o[tableID].val == payload.id;
                                 else return o[tableID] == payload.id;
                             });      
@@ -1135,26 +1070,26 @@ var store = {
                     }
                 }
                 else{
-                    if (this.errDebug) console.error("ERROR: addDataObj:\t\tdefault object does not exist - " + this.payloadToStr(payload));
+                    if(this.state.errDebug) console.error("ERROR: addDataObj:\t\tdefault object does not exist - " + this.payloadToStr(payload));
                 }
             }
-            else if (this.errDebug) console.error("ERROR: addDataObj:\t\tobject does not exist - " + this.payloadToStr(payload));
+            else if(this.state.errDebug) console.error("ERROR: addDataObj:\t\tobject does not exist - " + this.payloadToStr(payload));
         }
-        else if (this.errDebug) console.error("ERROR: addDataObj:\t\tpayload - storename - " + this.payloadToStr(payload));
+        else if(this.state.errDebug) console.error("ERROR: addDataObj:\t\tpayload - storename - " + this.payloadToStr(payload));
 
 
-        // if id was included sent
+        // ifid was included sent
                 if( payload.hasOwnProperty('id') && payload.id ){
                     tableID = this.state.tableIDs[payload.storeName]
                     if(tableID){
                         obj = this.state[subState][payload.storeName].find(function(o){
-                            // if item is object, compare to val property [updated version, for more detail per field (properites)]
+                            // ifitem is object, compare to val property [updated version, for more detail per field (properites)]
                             if(typeof(o[tableID]) === 'object') return o[tableID].val == payload.id;
                             else return o[tableID] == payload.id;
                         });
                     }
                     else{
-                        if (this.errDebug) console.error("ERROR: getDataObj:\t\ttableID not found for store - " + this.payloadToStr(payload));
+                        if(this.state.errDebug) console.error("ERROR: getDataObj:\t\ttableID not found for store - " + this.payloadToStr(payload));
                     }
                 }
     }*/
@@ -1167,7 +1102,7 @@ var store = {
         if(this.state.columns.hasOwnProperty(storeName)){
             cols = this.state.columns[storeName];
         }
-        else if (this.errDebug) console.error('ERROR: getColumns: STORE DOES NOT EXIST - ' + storeName);
+        else if(this.state.errDebug) console.error('ERROR: getColumns: STORE DOES NOT EXIST - ' + storeName);
 
         return cols;
     },
@@ -1379,7 +1314,7 @@ var store = {
                     else if(newVal.updateDB === true){
                         //if(storeName == 'formData') console.log(newVal);
                         this.setState(newVal, 'default', storeName);
-                        if (this.debug) console.log(storeName + ' nulled')
+                        if(this.state.debug) console.log(storeName + ' nulled')
                         this.setState(null, 'database', storeName);
                         this.setState(null, 'form', storeName);
                         //if(inDialog) this.setState(null, 'dialog', storeName);
@@ -1426,7 +1361,7 @@ var store = {
                     }
                     else{
                         if( (this.state.database[storeName] && this.state.database[storeName].length > 0) || (this.state.form[storeName] && this.state.form[storeName].length > 0) ){
-                            if (this.debug) console.log(storeName + ' nulled')
+                            if(this.state.debug) console.log(storeName + ' nulled')
                         }
                         this.setState([], 'database', storeName);
                         this.setState([], 'form', storeName);
@@ -1438,10 +1373,10 @@ var store = {
                 this.setState(newVal, 'database', storeName);
             }
 
-            if (this.debug) console.log(editable ? 'loadStore: ' + storeName + ' - states set: database, form, default(s)' : 'loadStore: ' + storeName + ' - states set: database');
+            if(this.state.debug) console.log(editable ? 'loadStore: ' + storeName + ' - states set: database, form, default(s)' : 'loadStore: ' + storeName + ' - states set: database');
 
             this.setStoreIsLoading({stateName: 'database', storeName: storeName, isLoading: false});
-            if (editable){
+            if(editable){
                 this.setStoreIsLoading({stateName: 'default', storeName: storeName, isLoading: false});
                 this.setStoreIsLoading({stateName: 'form', storeName: storeName, isLoading: false});
                 /*if(inDialog){
@@ -1453,7 +1388,7 @@ var store = {
             //if(storeName == 'formData' && this.state.form.formData && this.state.form.formData.hasOwnProperty('FormID')) console.log('End Form FormID: ' + this.state.form.formData.FormID)
         }
         else{
-            if (this.warnDebug) console.warn('WARNING: loadStore: ' + storeName + ' - no results');   
+            if(this.state.warnDebug) console.warn('WARNING: loadStore: ' + storeName + ' - no results');   
         }
     },
     loadColumns(newValue, storeNames, loadDate){
@@ -1474,9 +1409,9 @@ var store = {
             });
 
             this.setStoreIsLoading({stateName: 'columns', isLoading: false});
-            if (this.debug) console.log('loadColumns: columns set');
+            if(this.state.debug) console.log('loadColumns: columns set');
         }
-        else if (this.errDebug) console.error('ERROR: loadColumns: NO RESULTS');
+        else if(this.state.errDebug) console.error('ERROR: loadColumns: NO RESULTS');
     },
     // Only used in Entry & Build - Home (View All Forms or View All Records)
     loadDataTable (newValue, storeName, loadDate) {
@@ -1493,12 +1428,12 @@ var store = {
 
             this.setState(newVal, 'datatables', storeName);
 
-            if (this.debug) console.log('loadDataTable triggered - ' + storeName + ' - states set: datatables');
+            if(this.state.debug) console.log('loadDataTable triggered - ' + storeName + ' - states set: datatables');
 
             //this.setStoreIsLoading({stateName: 'datatables', storeName: storeName, isLoading: false});
         }
         else{
-            if (this.warnDebug) console.warn('WARNING: loadDataTable - ' + storeName + ' - NO RESULTS');
+            if(this.state.warnDebug) console.warn('WARNING: loadDataTable - ' + storeName + ' - NO RESULTS');
             this.setState([], 'datatables', storeName);
         }
         this.setStoreIsLoading({stateName: 'datatables', storeName: storeName, isLoading: false});
@@ -1523,11 +1458,11 @@ var store = {
             returnVal = this.compareColValObjs(colA, colB, {byCategory: false, alphabetically: false});
         }
         else if(typeof(colA) == 'object'){
-            if (this.errDebug) console.error("ERROR: comparing different types: (" + colA.valType + ") " + colA.val + " ? " + colB);
+            if(this.state.errDebug) console.error("ERROR: comparing different types: (" + colA.valType + ") " + colA.val + " ? " + colB);
             returnVal = 0;
         }
         else if(typeof(colB) == 'object'){
-            if (this.errDebug) console.error("ERROR: comparing different types: " + colA + " ? " + " (" + colB.valType + ") " + colB.val);
+            if(this.state.errDebug) console.error("ERROR: comparing different types: " + colA + " ? " + " (" + colB.valType + ") " + colB.val);
             returnVal = 0;
         }
         else{
@@ -1538,11 +1473,11 @@ var store = {
                 returnVal - 1;
             }
         }
-        // don't change sign if comparison included a null
+        // don't change sign ifcomparison included a null
         if(sortBy && sortBy.toUpperCase() == 'DESCENDING' || sortBy.toUpperCase() == 'DESC'){
             returnVal = returnVal * -1;
         }
-        //if(this.debug) console.log(returnVal);
+        //if(this.state.debug) console.log(returnVal);
         return returnVal;
     },
 
@@ -1550,7 +1485,7 @@ var store = {
     compareColValObjs(colObjA, colObjB, sortPayload){
         var returnVal = 0;
 
-        //if(this.debug) console.log(colObjA.val + " : " + colObjB.val);
+        //if(this.state.debug) console.log(colObjA.val + " : " + colObjB.val);
 
         // check for null, nulls at end
         if(colObjA.val === null && colObjB.val === null){
@@ -1574,7 +1509,7 @@ var store = {
                 returnVal = 1;
             }
         }
-        else if (colObjA.valType == 'select' && colObjB.valType == 'select'){
+        else if(colObjA.valType == 'select' && colObjB.valType == 'select'){
             if(colObjA.valObj && colObjB.valObj){
                 this.compareVSOptions(colObjA.valObj, colObjB.valObj, sortPayload);
             }
@@ -1590,7 +1525,7 @@ var store = {
                 }
             }
         }
-        /*else if ( (colObjA.valType == 'select2' && colObjB.valType == 'select2') || colObjA.valType == 'autocomplete' && colObjB.valType == 'autocomplete' ){
+        /*else if( (colObjA.valType == 'select2' && colObjB.valType == 'select2') || colObjA.valType == 'autocomplete' && colObjB.valType == 'autocomplete' ){
             if(colObjA.valObj && colObjB.valObj){
                 this.compareVSOptions(colObjA.valObj, colObjB.valObj, sortPayload);
             }
@@ -1606,7 +1541,7 @@ var store = {
                 }
             }
         }*/
-        else if (colObjA.valType == 'boolean' && colObjB.valType == 'boolean'){
+        else if(colObjA.valType == 'boolean' && colObjB.valType == 'boolean'){
             if(colObjA.val == colObjB.val){
                 returnVal = 0;
             }
@@ -1617,7 +1552,7 @@ var store = {
                 returnVal = -1;
             }
         }
-        else if (colObjA.valType == colObjB.valType){
+        else if(colObjA.valType == colObjB.valType){
             if(colObjA.val == colObjB.val){
                 returnVal = 0;
             }
@@ -1630,7 +1565,7 @@ var store = {
         }
         // prop types don't match
         else{
-            if (this.debug) console.log("COMPARING TWO DIFFERENT TYPES - " + colObjA.valType + ' ? ' + colObjB.valType);
+            if(this.state.debug) console.log("COMPARING TWO DIFFERENT TYPES - " + colObjA.valType + ' ? ' + colObjB.valType);
             if(colObjA.valType == 'boolean' && colObjB.valType != 'boolean'){
                 returnVal = 1;
             }
@@ -1672,15 +1607,15 @@ var store = {
                 if(!(c.IsTableID) && !(c.IsOrderID)){
                     payload = Object.assign({}, payload, {colVal: newVal[c.ColumnName], FieldType: c.ColumnType, Column: c});
 
-                    if (c.hasOwnProperty('ColumnTypeID')) payload = Object.assign({}, payload, {FieldTypeID: c.ColumnTypeID});
+                    if(c.hasOwnProperty('ColumnTypeID')) payload = Object.assign({}, payload, {FieldTypeID: c.ColumnTypeID});
                     //if(newVal.hasOwnProperty('updateDB')) payload = Object.assign({}, payload, {UpdateDB: newVal.updateDB});
 
-                    /*if (c.hasOwnProperty('ValidationSetID')) payload = Object.assign(payload, {ValidationSetID: c.ValidationSetID});
-                    if (c.hasOwnProperty('JoinSet')) payload = Object.assign(payload, {JoinSet: c.JoinSet, ForeignKey: c.ForeignKey, ValProp: c.ValColumn, TextProp: c.TextColumn});
-                    if (c.hasOwnProperty('Label')) payload = Object.assign(payload, {Label: c.Label});
-                    if (c.hasOwnProperty('UserInput')) payload = Object.assign(payload, {isInput: c.UserInput, required: c.Required});
-                    if (c.hasOwnProperty('Calculated')) payload = Object.assign(payload, {calculated: c.Calculated});
-                    if (c.hasOwnProperty('ShowInHeader')) payload = Object.assign(payload, {isHeader: c.ShowInHeader, hasTooltip: c.HasTooltip, tooltipCol: c.TooltipForCol});*/
+                    /*if(c.hasOwnProperty('ValidationSetID')) payload = Object.assign(payload, {ValidationSetID: c.ValidationSetID});
+                    if(c.hasOwnProperty('JoinSet')) payload = Object.assign(payload, {JoinSet: c.JoinSet, ForeignKey: c.ForeignKey, ValProp: c.ValColumn, TextProp: c.TextColumn});
+                    if(c.hasOwnProperty('Label')) payload = Object.assign(payload, {Label: c.Label});
+                    if(c.hasOwnProperty('UserInput')) payload = Object.assign(payload, {isInput: c.UserInput, required: c.Required});
+                    if(c.hasOwnProperty('Calculated')) payload = Object.assign(payload, {calculated: c.Calculated});
+                    if(c.hasOwnProperty('ShowInHeader')) payload = Object.assign(payload, {isHeader: c.ShowInHeader, hasTooltip: c.HasTooltip, tooltipCol: c.TooltipForCol});*/
 
                     newValObj = self.getColValObj(payload);
 
@@ -1689,7 +1624,7 @@ var store = {
                     if(newVal.hasOwnProperty(c.ColumnName)) newVal[c.ColumnName] = newValObj;
                     else Vue.set( newVal, c.ColumnName, newValObj );
                 }
-                else if (c.IsTableID){
+                else if(c.IsTableID){
                     self.state.tableIDs[storeName] = c.ColumnName;
                 }
                 // orderID needs updateDB, so has to be object, but only {dbVal: _, updateDB: t/f}
@@ -1777,7 +1712,7 @@ var store = {
                     else if(setDef){
                         val = moment();
                     }
-/* ADD: SET TO TODAY IF PRIMARY DATE FIELD */
+/* ADD: SET TO TODAY ifPRIMARY DATE FIELD */
                     /*else{
                         val = null;
                         displayVal = '';
@@ -1821,7 +1756,7 @@ var store = {
                     if(currVal === null){
                         val = false;
                     }
-                    else if (currVal == true || currVal == 1){
+                    else if(currVal == true || currVal == 1){
                         val = true;
                     }
                     else{
@@ -1880,7 +1815,7 @@ var store = {
                             }
                         }*/
                     }
-                    else if (currVal !== null){
+                    else if(currVal !== null){
                         if(self.errDebug) console.error('ERROR: getValObj - NO VSOPTIONS LOADED')
                     }
                 break;
@@ -1939,27 +1874,27 @@ var store = {
                     displayVal = currVal.toString();
                 }
             }
-            else if (fieldT.indexOf('TEXTAREA') > -1){
+            else if(fieldT.indexOf('TEXTAREA') > -1){
                 valType = 'textarea';
                 if(currVal !== null){
                     displayVal = currVal.toString();
                     val = currVal.toString().toUpperCase();
                 }
             }
-            else if (fieldT.indexOf('TEXT') > -1 || fieldT.indexOf('URL') > -1 || fieldT.indexOf('USER') > -1 || fieldT.indexOf('HTMLID') > -1){
+            else if(fieldT.indexOf('TEXT') > -1 || fieldT.indexOf('URL') > -1 || fieldT.indexOf('USER') > -1 || fieldT.indexOf('HTMLID') > -1){
                 valType = 'text';
                 if(currVal !== null){
                     displayVal = currVal.toString();
                     val = currVal.toString().toUpperCase();
                 }
             }
-            else if (fieldT.indexOf('BOOL') > -1 || fieldT.indexOf('BOOLEAN') > -1){
+            else if(fieldT.indexOf('BOOL') > -1 || fieldT.indexOf('BOOLEAN') > -1){
                 valType = 'boolean';
                 // allow for bits to be null
                 if(currVal === null){
                     val = false;
                 }
-                else if (currVal == true || currVal == 1){
+                else if(currVal == true || currVal == 1){
                     val = true;
                 }
                 else{
@@ -1967,7 +1902,7 @@ var store = {
                 }
                 displayVal = val ? 'true' : 'false';
             }
-            else if (fieldT.indexOf('VALSET') > -1){
+            else if(fieldT.indexOf('VALSET') > -1){
                 valType = 'text';
                 if(currVal !== null){
                     displayVal = currVal.toString();
@@ -2007,17 +1942,17 @@ var store = {
                                 }
                             }
                             else{
-                                if(this.errDebug) console.error('ERROR: getValObj - NOT FOUND IN STATE.' + subset + '.' + joinSet + ' - ' + currVal);
+                                if(this.state.errDebug) console.error('ERROR: getValObj - NOT FOUND IN STATE.' + subset + '.' + joinSet + ' - ' + currVal);
                             }
                         }
                     }
                     else if(currVal !== null){
-                        if(this.errDebug) console.error('ERROR: getValObj - ' + joinSet + ' NOT LOADED')
+                        if(this.state.errDebug) console.error('ERROR: getValObj - ' + joinSet + ' NOT LOADED')
                         val = currVal;
                         displayVal = currVal.toString();
                     }
                 }
-                else {
+                else{
                     if(self.errDebug) console.error('ERROR: getValObj - NO JOINSET SPECIFIED')
                     val = currVal;
                     displayVal = currVal.toString();
@@ -2096,13 +2031,13 @@ var store = {
         if(payload.hasOwnProperty('fieldObj') && payload.fieldObj){
             msg += '; fieldObj - ';
 
-            if (payload.fieldObj.hasOwnProperty('fieldTypeID') && payload.fieldObj.fieldTypeID){
+            if(payload.fieldObj.hasOwnProperty('fieldTypeID') && payload.fieldObj.fieldTypeID){
                 msg += 'fieldTypeID: ' + payload.fieldObj.fieldTypeID;
             }
             else if(payload.fieldObj.hasOwnProperty('FieldTypeID') && payload.fieldObj.FieldTypeID){
                 msg += 'FieldTypeID: ' + payload.fieldObj.FieldTypeID;
             }
-            else if (payload.fieldObj.hasOwnProperty('fieldType') && payload.fieldObj.fieldType){
+            else if(payload.fieldObj.hasOwnProperty('fieldType') && payload.fieldObj.fieldType){
                 msg += 'fieldType: ' + payload.fieldObj.fieldType;
             }
             else if(payload.fieldObj.hasOwnProperty('FieldType') && payload.fieldObj.FieldType){
@@ -2117,13 +2052,13 @@ var store = {
         if(payload.hasOwnProperty('valObj') && payload.valObj){
             msg += '; valObj - ';
 
-            if (payload.valObj.hasOwnProperty('fieldTypeID') && payload.valObj.fieldTypeID){
+            if(payload.valObj.hasOwnProperty('fieldTypeID') && payload.valObj.fieldTypeID){
                 msg += 'fieldTypeID: ' + payload.valObj.fieldTypeID;
             }
             else if(payload.valObj.hasOwnProperty('FieldTypeID') && payload.valObj.FieldTypeID){
                 msg += 'FieldTypeID: ' + payload.valObj.FieldTypeID;
             }
-            else if (payload.valObj.hasOwnProperty('fieldType') && payload.valObj.fieldType){
+            else if(payload.valObj.hasOwnProperty('fieldType') && payload.valObj.fieldType){
                 msg += 'fieldType: ' + payload.valObj.fieldType;
             }
             else if(payload.valObj.hasOwnProperty('FieldType') && payload.valObj.FieldType){
@@ -2141,38 +2076,34 @@ var store = {
         return msg;
     },
 
-}
+});
 
 
-                    /*setStateIsLoading(stateName, loadDate){
 
-                                var storeNames = Object.keys(this.state[stateName]._isLoading)
-                                storeNames.forEach(function(store){
-                                    stateIsLoading = stateIsLoading || self.state[stateName]._isLoading[store];
-                                });
-                                this.state[stateName].isLoading = stateIsLoading;
-                    },
-                    setStateLastLoad(stateName, loadDate){
-                        /*if(!(this.state[stateName].lastLoad)){
-                            this.state[stateName].lastLoad = loadDate;
-                        }
-                        else{
-                            moDiff = this.state[stateName].lastLoad.diff(loadDate);
-                            if(moDiff < 0){
-                                this.state[stateName].lastLoad = loadDate;
-                            }
-                        }*/
-                        /*var self = this;
-                                var storeNames = Object.keys(this.state[stateName]._lastLoad)
-                                storeNames.forEach(function(store){
-                                    if(!stateLastLoad) stateLastLoad = self.state[stateName]._lastLoad[store];
-                                    else{
-                                        moDiff = stateLastLoad.diff(self.state[stateName]._lastLoad[store]);
-                                        if(moDiff < 0){
-                                            stateLastLoad = self.state[stateName]._lastLoad[store];
-                                        }
-                                    }
-                                });
-                                this.state[stateName].isLoading = stateIsLoading;
-                                this.state[stateName].lastLoad = stateLastLoad;
-                    },*/
+/*updateConnectionsOnCheckReturn({ dispatch, commit, state }, payload){ // payload = { checktime }
+            if(payload.hasOwnProperty('checktime') && payload.checktime){
+                var storePayload = Object.assign({}, payload, {unsentReq: false, serverDown: false, checkServer: false });
+                dispatch('updateUnsentReq', storePayload);
+                if(state.appSettings.connections.checkServer){
+                    dispatch('updateServerDown', storePayload);
+                    commit('set_checkServer', storePayload);
+                }
+            } else if(state.errDebug) console.error("ERROR: updateConnectionsOnCheckReturn:\t\tpayload - " + JSON.stringify(payload));
+        },
+        updateConnectionsOnCheckFail({ dispatch, commit, state }, payload){ // payload = { postData, checktime }
+            if(payload.hasOwnProperty('postData') && payload.postData && payload.hasOwnProperty('checktime') && payload.checktime){
+                var storePayload = {checkTime: payload.checkTime, unsentReq: false, serverDown: false, checkServer: false };
+                if(payload.postData.readyState == 0){
+                    storePayload.unsentReq = true;
+                    dispatch('updateUnsentReq', storePayload);
+                }
+                else{
+                    dispatch('updateUnsentReq', storePayload);
+                    if(state.appSettings.connections.checkServer){
+                        storePayload.serverDown = true;
+                        dispatch('updateServerDown', storePayload);
+                        commit('set_checkServer', storePayload);
+                    }
+                }
+            } else if(state.errDebug) console.error("ERROR: updateConnectionsOnCheckFail:\t\tpayload - " + JSON.stringify(payload));
+        },*/

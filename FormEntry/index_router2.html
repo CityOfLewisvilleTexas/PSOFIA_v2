@@ -6,21 +6,28 @@
     <!-- force no compatibility mode in IE -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!-- google fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <!--<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Product+Sans:400,400i,700,700i" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
 
     <!-- styles -->
     <!--<link rel="stylesheet" type="text/css" href="style.css" media="screen" />-->
     <!--<link rel="stylesheet" title="styles" href="materialize/css/materialize.min.css">-->
-    <link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">
+    <!--<link href="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.min.css" rel="stylesheet">-->
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
 
     <!-- Vue -->
-    <script src="https://unpkg.com/vue/dist/vue.js"></script>
+    <!--<script src="https://unpkg.com/vue/dist/vue.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
     <!-- Vue Router -->
     <script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+    <!--VueX -->
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/vuex/3.0.1/vuex.min.js"></script>-->
     <!-- Vuetify -->
-    <script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
     <!-- axios -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <!-- JQuery -->
@@ -35,6 +42,7 @@
     <script type="text/javascript" src="../scripts/storeA.js"></script>
     <!-- polyfills - Object.assign -->
     <script type="text/javascript" src="../scripts/polyfills.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.js"></script>
 
     <!-- materialize -->
     <!--<script src="materialize/js/materialize.js"></script>-->
@@ -58,20 +66,20 @@
     <div id="app" v-cloak>
     <v-app>
         <!-- colored toolbar -->
-        <v-toolbar app dense flat dark color="indigo">
-            <v-toolbar-side-icon></v-toolbar-side-icon>
+       <v-app-bar app dense flat dark color="primary">
             <v-toolbar-title>PSOFIAv2 Form Entry</v-toolbar-title>
             <v-spacer></v-spacer>
-            <v-toolbar-items>
-                <v-btn flat>{{userEmail}}</v-btn>
-            </v-toolbar-items>
             <v-btn icon>
-                <v-icon>refresh</v-icon>
+                <v-icon>mdi-account</v-icon>
+            </v-btn>
+            <v-toolbar-title>{{userEmail}}</v-toolbar-title>
+            <v-btn icon>
+                <v-icon>mdi-refresh</v-icon>
             </v-btn>
             <!--<v-btn icon @click="goBack">
                 <v-icon>arrow_back</v-icon>
             </v-btn>-->
-        </v-toolbar>
+        </v-app-bar>
         <v-content>
             <v-container fluid>
                 <router-view></router-view>

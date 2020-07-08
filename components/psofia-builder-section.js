@@ -1,28 +1,217 @@
 Vue.component('psofia-builder-section', {
 	props: {
-		formSectionId:{
-			type: [Number],
-			required: true
-		}
+		stateName:{	
+			type: String,
+			required: false,
+			default: 'form'
+		},
+		storeName: {
+			type: String,
+			required: false,
+			default: 'formSections'
+		},
+		storeId:{
+			type: Number,
+			required: true,
+		},
+		parentShowInactive:{
+			type: Boolean,
+			required: false,
+			default: false
+		},
 	},
 	template: `
-		<v-flex xs12 mb-3>
-			<v-card class="card--flex-toolbar">
-				<v-toolbar card>
-					<v-toolbar-title class="body-2 grey--text">Section {{formSection.SectionOrder}}</v-toolbar-title>
-					<v-spacer></v-spacer>
-					<v-btn icon disabled @click="moveSectionUp">
-						<v-icon>arrow_upward</v-icon>
-					</v-btn>
-					<v-btn icon disabled @click="moveSectionDown">
-						<v-icon>arrow_downward</v-icon>
-					</v-btn>
-				</v-toolbar>
+		<v-card v-if="storeId && formSection"
+			shaped class="mx-md-2 my-4">
+			
+			<v-toolbar flat color="grey lighten-2">
+				<v-toolbar-title>Section {{formSection.SectionOrder.dbVal}}</v-toolbar-title>
+
+				<v-progress-linear color="secondary" :active="appLoading" indeterminate absolute bottom></v-progress-linear>
+
+				<v-spacer></v-spacer>
+
+				<v-btn icon disabled @click="moveSectionUp">
+					<v-icon>mdi-transfer-up</v-icon>
+				</v-btn>
+				<v-btn icon disabled @click="moveSectionDown">
+					<v-icon>mdi-transfer-down</v-icon>
+				</v-btn>
+				<v-btn icon v-if="hasInactiveFields" @click="showInactive = !showInactive">
+					<v-icon>mdi-dots-vertical</v-icon>
+				</v-btn>
+			</v-toolbar>
+			
+			<v-card-text>
+
+				<psofia-input v-for="(field, index) in inputFields" :key="index"
+					:store-name="storeName" :store-id="storeId" :val-propname="field"
+				></psofia-input>
+
+				<psofia-fields-table
+					:state-name="stateName" store-name="formFields" :props="propsObj" :parent-show-inactive="showInactiveCalc"
+				></psofia-fields-table>
+
+				<v-divider></v-divider>
 				
-				<v-card-text>
-					<v-layout row wrap>
-						<v-flex xs12>
-							<builder-combobox-v
+				<!--<builder-form-sub-section-v v-for="sub in subSections" 
+					:key="sub.FormSubSectionID" 
+					:sub-section="sub" 
+					:fields="getSubSectionFields(sub)"  
+					:all-sub-sections="allSubSections"  
+					:all-field-types="allFieldTypes" 
+					:all-validation-sets="allValidationSets" 
+				></builder-form-sub-section-v>-->
+
+			</v-card-text>
+
+			<!--<builder-field-dialog-v
+				:form-section-id="storeId" :fields="sectionFields"
+			></builder-field-dialog-v>-->
+
+			<v-card-actions>
+				<v-btn @click="addSubSection" text block color="primary">
+					<v-icon left>mdi-shape-rectangle-plus</v-icon>Add New Sub Section
+				</v-btn>
+			</v-card-actions>
+			
+		</v-card>
+	`,
+
+	data: function(){
+		return{
+			isLoading: false,
+			sharedState: store.state,
+			showInactive: false,
+			//showDialog: false,
+			//editSection: {},
+			debug: true,
+		}
+	},
+
+	created: function(){
+		if(this.debug) console.log("\t\t\tBUILDER FORM SECTION - Created");
+	},
+	mounted:function(){
+		if(this.debug) console.log("\t\t\tBUILDER FORM SECTION - Mounted");
+        this.isLoading = false;
+	},
+
+	watch: {
+    },
+
+	computed: {
+		showInactiveCalc: function(){
+			return this.parentShowInactive || this.showInactive;
+		},
+
+		stateLoading: function(){
+            return this.sharedState.isLoading;
+        },
+        colsLoading: function(){
+            return this.sharedState.columns.isLoading;
+        },
+        formLoading: function(){
+            return this.sharedState.form.isLoading;
+        },
+        dbLoading: function(){
+            return this.sharedState.database.isLoading;
+        },
+        storeLoading: function(){
+            return this.stateLoading || this.formLoading || this.dbLoading || this.colsLoading;
+        },
+        appLoading: function(){
+            return this.storeLoading || this.isLoading;
+        },
+
+		payload: function(){
+			return {stateName: this.stateName, storeName: this.storeName, id: this.storeId}
+		},
+
+		formSection: function(){
+			if(!this.storeLoading) return store.getDataObj(this.payload);
+        },
+
+        inputFields: function(){
+            var self = this;
+            if(this.formSection){
+                return Object.keys(self.formSection).filter(function(field){
+                    return (self.formSection[field].isInput && !(self.formSection[field].isHidden) && (self.formSection[field].valType !== 'boolean'));
+                });
+            }
+        },
+
+        /* PROPS FOR FIELDS TABLE */
+
+        storeIdPropname: function(){
+        	return store.getStoreTableID(this.payload);
+        },
+        subSectionIdPropname: function(){
+        	return store.getStoreTableID({storeName:'formSubSections'});
+        },
+
+        propsObj: function(){
+        	var obj = {};
+        	obj[this.storeIdPropname] = this.storeId;
+        	obj[this.subSectionIdPropname] = null;
+        	return obj;
+        },
+
+
+        /* DETERMINE IF INACTIVE FORM FIELDS EXIST ANYWHERE IN SECTION (incl subsections of section) */
+
+        payload_fields: function(){
+        	var props = {}
+        	props[this.storeIdPropname] = this.storeId;
+        	return {stateName: this.stateName, storeName: 'formFields', props: props, keepInactive: this.showInactiveCalc};
+        },
+
+        hasInactiveFields: function(){
+			if(this.payload_fields) return store.checkFieldsInactive(this.payload_fields);
+		},
+	},
+
+	methods: {
+		initialize: function(){
+			var self = this;
+		},
+
+		deleteFieldByID: function(fieldID) {
+			//confirm('Are you sure you want to delete this field?') //&& this.fields.splice(index, 1);
+
+			//eventHub.$emit('delete-field', {fieldID: fieldID});
+			//this.editingFieldID = null;
+        	//this.editingField = clone(self.defaultField);
+		},
+
+/* ADD NEW FIELD - currently passing section ID only */
+		updateField: function(fieldID, updatedField){
+			eventHub.$emit('update-field', {fieldID: fieldID, updatedField: updatedField});
+		},
+
+/* ADD NEW SUBSECTION - currently passing section ID only */
+		addSubSection: function(val){
+			//eventHub.$emit('add-new-sub-section', {sectionID: this.section.sectionID});
+		},
+		moveSectionUp(){
+			var self = this;
+			//eventHub.$emit('move-section', {formSectionID: self.section.FormSectionID, type: 'up'});
+		},
+		moveSectionDown(){
+			var self = this;
+			//eventHub.$emit('move-section', {formSectionID: self.section.FormSectionID, type: 'down'});
+		}
+	}
+})
+
+
+
+
+
+
+
+
+/*<builder-combobox-v
 								data-portion="section"
 								:form-section-id="formSectionId"
 								:autocomplete-options="allSections"
@@ -46,178 +235,55 @@ Vue.component('psofia-builder-section', {
 								data-portion="section"
 							></builder-checkbox-v>
 							<v-divider></v-divider>
-						</v-flex>
-						
-						<v-flex xs12>
-							<v-toolbar flat color="white">
-								<v-toolbar-title class="body-2 grey--text">Fields</v-toolbar-title>
-								<v-spacer></v-spacer>
-								<v-btn flat small disabled @click="editNewField">
-									<v-icon small>add_box</v-icon>Add Field
-								</v-btn>
-							</v-toolbar>
-							<builder-fields-table-v
-								:section="formSection"
-								:orig-section="origSection"
-								:sub-sections="formSubSections"
-								:fields="sectionFields"
-								:orig-sections="origSections"
-								:orig-sub-sections="origSubSections"
-								:orig-fields="origFields"
-							></builder-fields-table-v>
-						</v-flex>
+						</v-flex>*/
 
-						<builder-field-dialog-v
-							:form-section-id="formSectionId"
-							:fields="sectionFields"
-						></builder-field-dialog-v>
-						
-						<v-divider></v-divider>
-						
-						<!--<builder-form-sub-section-v v-for="sub in subSections" 
-							:key="sub.SubSectionID" 
-							:sub-section="sub" 
-							:fields="getSubSectionFields(sub)"  
-							:all-sub-sections="allSubSections"  
-							:all-field-types="allFieldTypes" 
-							:all-validation-sets="allValidationSets" 
-						></builder-form-sub-section-v>-->
-					</v-layout>
-				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
-					<v-btn color="blue darken-1" flat @click="addSubSection">Add New Sub Section</v-btn>
-				</v-card-actions>
-				
-			</v-card>
-		</v-flex>
-	`,
-	data: function(){
-		return{
-			//list vars
-			sharedState: store.state,
-			/* copied from Vuetify for data-table w/ CRUD */
-			showDialog: false,
-			defaultField: {},
-			origSection: {},
-			editSection: {},
-		}
-	},
-	created: function(){
-		 this.initialize();
-	},
-	mounted:function(){
-		//this.initialize(); // idk why not done in ready?
-	},
-	watch: {
-      /*showDialog: function(val) {
-        val || this.close()
-      }*/
-    },
-	computed: {
-		allSections:function(){
-			return this.sharedState.sections;
-		},
-		allSubSections:function(){
-			return this.sharedState.subSections;
-		},
-		allFieldTypes:function(){
-			return this.sharedState.fieldTypes;
-		},
-		allValidationSets:function(){
-			return this.sharedState.validationSets;
-		},
+/*ckboxFields: function(){
+            var self = this;
+            if(this.formSection){
+                return Object.keys(self.formSection).filter(function(field){
+                    return (self.formSection[field].isInput  && !(self.formSection[field].isHidden) && (self.formSection[field].valType === 'boolean'));
+                });
+            }
+        },*/
 
-		formSection: function(){
-			return store.getFormSection(this.formSectionId);
-		},
-		origSection: function(){
-			var self = this;
-			var payload2 = Object.assign(payload, {isOrig: true});
-			return store.getFormSection(payload2);
-		},
-		sectionID:function(){
+
+        /*sectionID:function(){
 			return this.formSection.SectionID;
 		},
-		sectionTitle: function(){
-			return store.getFormSectionProp(this.formSectionId, 'SectionTitle');
-		},
 
-		sectionSubSections:function(){
-			return store.getFormSubSections_OrderedInSec(this.formSectionId);
+		colAllSections: function(){
+			return this.sharedState.columns.allSections;
+		},
+		colSections: function(){
+            return this.sharedState.columns.formSections;
+        },
+        inputColumns: function(){
+        	return this.colSections.filter(function(col){
+        		return (col.UserInput && !(col.Hidden) && col.ColumnType !== 'BOOL' && col.ColumnType !== 'BOOLEAN');
+        	});
+        },
+        ckboxColumns: function(){
+        	return this.colSections.filter(function(col){
+        		return (col.UserInput && !(col.Hidden) && (col.ColumnType === 'BOOL' || col.ColumnType === 'BOOLEAN'));
+        	});
+        },*/
+
+		/*sectionSubSections:function(){
+			var self = this;
+			return store.getFormSubSections_OrderedInSec(self.payload);
 		},
 
 		sectionFields:function(){
-			return store.getFormFields_OrderedInSec(this.formSectionId);
-		},
-	},
-	methods: {
-		initialize: function(){
 			var self = this;
+			return store.getFormFields_OrderedInSec(self.payload);
+		},*/
 
-			this.origSection = clone(store.getOrigFormSection(self.formSectionId));
-			this.editSection = clone(store.getFormSection(self.formSectionId));
 
-			//this.listenOnHub();
-		},
-		listenOnHub: function(){
-			var self = this;
-			//eventHub.$on('open-edit-dialog-full', self.openDialog);
-		},
-		findInSetByID: function(set, id, idPropname){
-            return set.find(function(s){
-                return s[idPropname] == id;
-            });
-        },
 
-        getDefaultField:function(){
-        	var self = this;
-        	return store.getDefaultField_ForSection(self.formSectionId);
-        },
-
-		getFieldType:function(field){
-			var ft = this.allFieldTypes.find(function(f){
-				return f.FieldTypeID == field.FieldTypeID;
-			})
-			if(ft){
-				return ft.FieldType;
-			}
-			else{
-				return '';
-			}
-		},
-
-		editNewField: function(fieldID){
+		/*editNewField: function(fieldID){
         	var self = this;
 			eventHub.$emit('open-edit-dialog-full', {sectionID: self.sectionID, fieldID: field.FormFieldID});
-		},
-
-		deleteFieldByID: function(fieldID) {
-			//confirm('Are you sure you want to delete this field?') //&& this.fields.splice(index, 1);
-
-			//eventHub.$emit('delete-field', {fieldID: fieldID});
-			//this.editingFieldID = null;
-        	//this.editingField = clone(self.defaultField);
-		},
-
-/* ADD NEW FIELD - currently passing section ID only */
-		updateField: function(fieldID, updatedField){
-			eventHub.$emit('update-field', {fieldID: fieldID, updatedField: updatedField});
-		},
-		addField: function(fieldID, field){
+		},*/
+		/*addField: function(fieldID, field){
 			eventHub.$emit('add-new-field', {fieldID: fieldID, field: field});
-		},
-
-/* ADD NEW SUBSECTION - currently passing section ID only */
-		addSubSection: function(val){
-			//eventHub.$emit('add-new-sub-section', {sectionID: this.section.sectionID});
-		},
-		moveSectionUp(){
-			var self = this;
-			eventHub.$emit('move-section', {formSectionID: self.formSection.FormSectionID, type: 'up'});
-		},
-		moveSectionDown(){
-			eventHub.$emit('move-section', {formSectionID: self.formSection.FormSectionID, type: 'down'});
-		}
-	}
-})
+		},*/

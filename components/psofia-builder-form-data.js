@@ -1,105 +1,132 @@
-Vue.component('builder-form-data-v', {
+Vue.component('psofia-builder-form-data', {
 	// declare the props
 	props: {
+        stateName:{ 
+            type: String,
+            required: false,
+            default: 'form'
+        },
+        storeName: {
+            type: String,
+            required: false,
+            default: 'formData'
+        }
 	},
 	template: `
-		<v-flex xs12>\
-			<v-card>\
-				<v-card-text>\
-					<v-layout row wrap>\
-						<v-flex xs12 sm8>\
-							<builder-text-v\
-								data-portion="form-data"\
-								val-propname="FormName"\
-								id-text="FormName"\
-								label-text="Form Name"\
-							></builder-text-v>\
-						</v-flex>
-						<v-flex xs12 sm4>\
-							<builder-text-v\
-								:field="formData"\
-								:orig-field="origFormData"\
-								val-propname="TableName"\
-								id-text="FormTable"\
-								label-text="Table Name"\
-								:input-disabled="true"\
-								:input-clearable="false"\
-								data-portion="form-data"\
-							></builder-text-v>\
-						</v-flex>
-						<v-flex xs12>\
-							<builder-text-v\
-								:field="formData"\
-								:orig-field="origFormData"\
-								val-propname="ViewFormAddress"\
-								id-text="FormAddress"\
-								label-text="View Form Address"\
-								data-portion="form-data"\
-							></builder-text-v>\
-						</v-flex>
-						<v-flex xs12>\
-							<builder-autocomplete-v\
-								:field="formData"\
-								:orig-field="origFormData"\
-								:autocomplete-options="departments" \
-								id-text="FormDepartment" \
-								val-propname="DepartmentID" \
-								text-propname="Department" \
-								label-text="Department" \
-								data-portion="form-data"\
-								add-option\
-							></builder-autocomplete-v>\
+		<v-card outlined>
+            <v-toolbar flat>
+                <v-toolbar-title>Form Data</v-toolbar-title>
 
-						</v-flex>
-					</v-layout>
-				</v-card-text>\
-			</v-card>\
-		</v-flex>\
+                <v-spacer></v-spacer>
+
+                <v-btn icon>
+                    <v-icon>mdi-dots-vertical</v-icon>
+                </v-btn>
+            </v-toolbar>
+
+
+            <v-progress-linear color="red" :active="appLoading" indeterminate absolute bottom></v-progress-linear>
+
+			<v-card-text>
+				<psofia-input v-for="(field, index) in inputFields" :key="index"
+					:store-name="storeName" :val-propname="field"
+				></psofia-input>
+
+                <v-row v-if="inputFields">
+                    <v-col cols="12" xs="12" sm="6" md="4" lg="3">
+                        <psofia-checkbox :store-name="storeName" val-propname="HasGUID"></psofia-checkbox>
+                    </v-col>
+                    <v-col cols="12" xs="12" sm="6" md="4" lg="3">
+                        <psofia-checkbox :store-name="storeName" val-propname="RefreshOnSubmit"></psofia-checkbox>
+                    </v-col>
+                    <v-col cols="12" xs="12" sm="6" md="4" lg="3">
+                        <psofia-checkbox :store-name="storeName" val-propname="Active"></psofia-checkbox>
+                    </v-col>
+                </v-row>
+
+                <v-row v-if="inputFields">
+                    <v-col cols="12" xs="12" md="3">
+                        <psofia-checkbox :store-name="storeName" val-propname="OAUTH_Required"></psofia-checkbox>
+                    </v-col>
+                    <v-col v-if="showAuth" disabled cols="12" xs="12" md="3">
+                        <psofia-checkbox :store-name="storeName" val-propname="AllowedADGroups"></psofia-checkbox>
+                    </v-col>
+                    <v-col v-if="showAuth" disabled cols="12" xs="12" md="3">
+                        <psofia-checkbox :store-name="storeName" val-propname="HasAuthProcedure"></psofia-checkbox>
+                    </v-col>
+                </v-row>
+
+			</v-card-text>
+		</v-card>
 	`,
+    /*  <v-col v-if="showAuth" cols="12" xs="12" md="6">
+            AllowedAD Groups (not functional)
+        </v-col>
+    */
+    /*  <v-flex xs12 mb-3>
+    */
 	data: function(){
 		return{
+            isLoading: true,
+            sharedState: store.state,
+            debug: true,
 		}
 	},
+    created: function(){
+        if(this.debug) console.log("\t\t\tBUILDER FORM DATA - Created");
+    },
+    mounted: function(){
+        if(this.debug) console.log("\t\t\tBUILDER FORM DATA - Mounted");
+        this.isLoading = false;
+    },
 	watch:{
 	},
 	computed:{
+		stateLoading: function(){
+            return this.sharedState.isLoading;
+        },
+        colsLoading: function(){
+            return this.sharedState.columns.isLoading;
+        },
+        formLoading: function(){
+            return this.sharedState.form.isLoading;
+        },
+        dbLoading: function(){
+            return this.sharedState.database.isLoading;
+        },
+        storeLoading: function(){
+            return this.stateLoading || this.formLoading || this.dbLoading || this.colsLoading;
+        },
+        appLoading: function(){
+            return this.storeLoading || this.isLoading;
+        },
 
+        formData: function(){
+            return this.sharedState.form.formData;
+        },
+
+        inputFields: function(){
+            var self = this;
+            if(this.formData){
+                return Object.keys(self.formData).filter(function(field){
+                    return (self.formData[field].isInput && !(self.formData[field].isHidden) && (self.formData[field].valType !== 'boolean'));
+                });
+            }
+        },
+        /*ckboxFields: function(){
+            var self = this;
+            if(this.formData){
+                return Object.keys(self.formData).filter(function(field){
+                    return (self.formData[field].isInput  && !(self.formData[field].isHidden) && (self.formData[field].valType === 'boolean'));
+                });
+            }
+        },*/
+
+        showAuth: function(){
+            if (this.formData) return this.formData.OAUTH_Required.val;
+        },
 	},
 	methods:{
-		updateValue:function(value){
-			// Emit the value through the hub (to top level)
-			//eventHub.$emit('update-input', {fieldID: this.field.FormFieldID, val: Number(formattedValue)});
-			//console.log("comp function");
-			//console.log(value);
-			//eventHub.$emit('update-form-data', {fieldID: this.field.FormFieldID, htmlID: this.field.FieldHTMLID, prop: val: value});
-		},
-		reload: function(val){
-			//var s = $(this.$el);
-			
-		},
-		/*getFieldVSet: function(field){
-			if(field.FieldType == 'SELECT'){
-				return this.vsSets.find(function(s){
-					return s.ValidationSetID == field.ValidationSetID;
-				});
-			}
-			else{
-				return null;
-			}
-		},
-		getFieldVSOptions: function(field){
-			if(field.FieldType == 'SELECT'){
-				return this.vsOptions.filter(function(o){
-					return o.ValidationSetID == field.ValidationSetID;
-				}).sort(function(a, b){
-					return a.OptionOrder - b.OptionOrder;
-				});
-			}
-			else{
-				return null;
-			}
-		},*/
+		
 	},
-	mounted: function(){
-	}
 })

@@ -89,7 +89,7 @@
         </div>
 
         <div class="fixed-action-btn" v-on:click="submitForm()">
-            <a class="btn-floating btn-large red" :disabled="!valuesInRequiredFields" v-if="!isSubmitting">
+            <a class="btn-floating btn-large red" :disabled="newFormValues.length == 0" v-if="!isSubmitting">
               <i class="large material-icons">done</i>
             </a>
         </div>

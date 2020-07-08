@@ -15,7 +15,7 @@ Vue.component('text-area-field', {
 				v-bind:value="field.fieldVal"
 				v-on:input="updateValue($event.target.value)"
 				v-on:focus="selectAll"
-				
+				data-length="4000"
 			></textarea>
 			<label v-if="field.FieldName" :for="field.FieldHTMLID">{{field.FieldName}}</label>
 		</div>
@@ -62,6 +62,6 @@ Vue.component('text-area-field', {
 			vm.updateValue($event.target.value);
 		});*/
 		s.trigger('autoresize');
-		//s.characterCounter();
+		s.characterCounter();
 	}
 })

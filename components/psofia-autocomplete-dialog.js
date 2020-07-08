@@ -1,6 +1,44 @@
 Vue.component('psofia-autocomplete-dialog', {
 	// declare the props
 	props: {
+		stateName:{	
+			type: String,
+			required: false,
+			default: 'form'
+		},
+		storeName:{	// formData, sections, subSections, fields, etc
+			type: String,
+			required: true
+		},
+		storeId:{	// formFieldID, formSectionID, formSubSectionID, etc
+			type: Number,
+			required: false
+		},
+		valPropname:{
+			type: String,
+			required: false
+		},
+		inputDisabled:{
+			type: Boolean,
+			required: false,
+			default: false
+		},
+		inputClearable:{
+			type: Boolean,
+			required: false,
+			default: true
+		},
+		parentShowInactive:{
+			type: Boolean,
+			required: false,
+			default: false
+		},
+		minimalInput:{
+			type: Boolean,
+			required: false,
+			default: false
+		},
+
 		searchText:{
 			type: String,
 			required: false

@@ -1,6 +1,16 @@
 Vue.component('psofia-form-data', {
 	// declare the props
 	props: {
+		stateName:{ 
+            type: String,
+            required: false,
+            default: 'form'
+        },
+        storeName: {
+            type: String,
+            required: false,
+            default: 'formData'
+        }
 	},
 	template: `
 		<v-flex xs12 mb-3>
@@ -10,6 +20,9 @@ Vue.component('psofia-form-data', {
 						<h3  class="headline mb-0">{{formData.FormName}}</h3>
 					</div>
 				</v-card-title>
+
+				<v-progress-linear color="red" :active="appLoading" indeterminate absolute bottom></v-progress-linear>
+
 				<v-card-text>
 					<div>
 						<div>Created: {{displayCreateDate}} by {{createUser}}</div>
@@ -23,16 +36,38 @@ Vue.component('psofia-form-data', {
 	//<form-section v-for="sub in subSections"></form-section>
 	data: function(){
 		return{
+			isLoading: true,
 			sharedState: store.state,
+			debug: true,
 		}
 	},
 	computed: {
+		stateLoading: function(){
+            return this.sharedState.isLoading;
+        },
+        colsLoading: function(){
+            return this.sharedState.columns.isLoading;
+        },
+        formLoading: function(){
+            return this.sharedState.form.isLoading;
+        },
+        dbLoading: function(){
+            return this.sharedState.database.isLoading;
+        },
+        storeLoading: function(){
+            return this.stateLoading || this.formLoading || this.dbLoading || this.colsLoading;
+        },
+        appLoading: function(){
+            return this.storeLoading || this.isLoading;
+        },
+
 		formData: function(){
 			return this.sharedState.form.formData;
 		},
-		origFormData: function(){
-			return this.sharedState.database.formData;
+		formRecord: function(){
+
 		},
+
 		createDateValObj:function(){
 			var self = this;
 			return getBuiltInPropVal(self.formData, 'CreateDate');

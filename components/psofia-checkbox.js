@@ -1,10 +1,15 @@
 Vue.component('psofia-checkbox', {
 	props: {
-		dataName:{	// formData, sections, subSections, fields, etc
+		stateName:{	
+			type: String,
+			required: false,
+			default: 'form'
+		},
+		storeName:{	// formData, sections, subSections, fields, etc
 			type: String,
 			required: true
 		},
-		dataId:{	// formFieldID, formSectionID, formSubSectionID, etc
+		storeId:{	// formFieldID, formSectionID, formSubSectionID, etc
 			type: Number,
 			required: false
 		},
@@ -12,51 +17,23 @@ Vue.component('psofia-checkbox', {
 			type: String,
 			required: true
 		},
-		formFieldId:{
-			type: Number,
-			required: false
-		},
-		idText:{
-			type: String,
-			required: false
-		},
-		idNum:{
-			type: Number,
-			required: false
-		},
-		idPropname:{
-			type: String,
-			required: false
-		},
-		concatID:{
+		inputDisabled:{
 			type: Boolean,
 			required: false,
 			default: false
 		},
-		labelText:{
-			type: String,
-			required: false
-		},
-		labelPropname:{
-			type: String,
-			required: false
-		},
-		descPropname:{
-			type: String,
-			required: false
-		},
-		inputDisabled:{
+		parentShowInactive:{
 			type: Boolean,
 			required: false,
 			default: false
 		},
 	},
 	template: `
-		<v-checkbox
+		<v-checkbox 
 			:id="inputID"
 			:ref="inputID"
 			
-			v-bind:value="inputVal"
+			:value="inputVal"
 			@change="changeValue"
 			@update:error="updateErr"
 			
@@ -64,6 +41,7 @@ Vue.component('psofia-checkbox', {
 			:hint="inputDesc"
 			:persistent-hint="hasHint"
 			:disabled="inputDisabled"
+			
 			@click.right="logValue"
 			
 			:messages="msg"
@@ -80,7 +58,6 @@ Vue.component('psofia-checkbox', {
 			isLoading: true,
 			inputValObj: {},
 			inputVal: '',
-			valNotes: '',
 			hasError: false,
 			errMsg: '',
 			debug: true,
@@ -99,7 +76,7 @@ Vue.component('psofia-checkbox', {
 		valObj: {
 			handler: function(val, prev){
 				if(val){
-					if(this.debug) console.log('watch field obj - reload input');
+					if(this.debug) console.log('watch field obj - reload input: ' + this.valPropname);
 					this.loadInput();
 				}
 			},
@@ -107,129 +84,108 @@ Vue.component('psofia-checkbox', {
 		}
 	},
 	computed:{
+		sharedForm: function(){
+            return this.sharedState.form;
+        },
+        sharedDB: function(){
+            return this.sharedState.database;
+        },
+        sharedCols: function(){
+            return this.sharedState.columns;
+        },
+		stateLoading: function(){
+            return this.sharedState.isLoading;
+        },
+        formLoading: function(){
+            return this.sharedState.form.isLoading;
+        },
+        dbLoading: function(){
+            return this.sharedState.database.isLoading;
+        },
+        colsLoading: function(){
+            return this.sharedState.columns.isLoading;
+        },
+        storeLoading: function(){
+            return this.stateLoading && this.formLoading && this.dbLoading && this.colsLoading;
+        },
+        appLoading: function(){
+            return this.storeLoading && this.isLoading;
+        },
+
 		compError: function(){
-			if((this.dataName !== 'formData' || this.dataName !== 'record') && !(this.dataId)){
-				return true;
-			}
+			if((this.storeName !== 'formData' || this.storeName !== 'formRecord') && !(this.storeId)) return true;
 			else return false;
 		},
-		dataIdPropname: function(){
+
+		storeIdPropname: function(){
+        	return store.getStoreTableID(this.payload);
+        },
+		descPropname: function(){
 			var propname;
-			if(this.dataName == 'sections'){
-				propname = 'FormSectionID';
-			}
-			else if(this.dataName == 'subSections'){
-				propname = 'FormSubSectionID';
-			}
-			else if(this.dataName == 'fields'){
-				propname = 'FormFieldID';
-			}
+			if(this.storeName == 'formSections') propname = 'SectionDesc';
+			else if(this.storeName == 'formSubSections') propname = 'SubsectionDesc';
+			else if(this.storeName == 'formFields') propname = 'FieldDesc';
 			return propname;
 		},
 
-		payload: function(){
-			var self = this;
-			if(!(this.dataId)){
-				return {objName: self.dataName, propname: self.valPropname};
-			}
-			else{
-				return {objName: self.dataName, id: self.dataId, idPropname: self.dataIdPropname, propname: self.valPropname};
-			}
+        payload: function(){
+			return {stateName: this.stateName, storeName: this.storeName, id: this.storeId, propname: this.valPropname};
 		},
 		origPayload: function(){
-			var self = this;
-			return Object.assign({}, self.payload, {isOrig:true});
+			return Object.assign({}, this.payload, {stateName: 'database'});
 		},
+		descPayload: function(){
+			return Object.assign({}, this.payload, {propname: this.descPropname});
+		},
+
 		valObj: function(){
-			var self = this;
-			return store.getObjProp(self.payload);
+			return store.getObjProp(this.payload);
 		},
 		origValObj: function(){
-			var self = this;
-			return store.getObjProp(self.origPayload);
+			return store.getObjProp(this.origPayload);
 		},
 
-		formField: function(){
-			var self = this;
-			if(self.formFieldId){
-				return store.getFormField({id:self.formFieldId});
-			}
+		// only for dialog
+		isDialog: function(){
+			return (this.stateName && this.stateName == 'dialog');
+		},
+		formPayload: function(){
+			if(this.isDialog) return Object.assign({}, this.payload, {stateName: 'form'});
 			else return null;
 		},
+		formValObj: function(){
+			if(this.isDialog) return store.getObjProp(this.payload);
+			else return null
+		},
+
 		inputID: function(){
-			var self = this;
 			var id = '';
+			if(this.storeId) id += 'input_' + this.storeName + '_' + this.storeIdPropname + this.storeId + '_' + this.valPropname;
+			else id += 'input_' + this.storeName + '_' + this.valPropname;
 
-			if(this.formField){
-				id += 'input_' + this.formField.FormFieldID;
-			}
-			/*else if(this.concatID){
-				if(this.idText != null && this.idNum == null && this.idPropname == null){
-					id += this.idText;
-				}
-				if(this.idPropname != null && this.formField.hasOwnProperty(self.idPropname)){
-					id += this.formField[self.idPropname].toString();
-				}
-				if(this.idNum != null){
-					id += '_' + this.idNum.toString();
-				}
-			}
-			else{
-				if(this.idText != null){
-					id = this.idText;
-				}
-				else if(this.idPropname != null && this.formField.hasOwnProperty(self.idPropname)){
-					id = this.formField[self.idPropname].toString();
-				}
-			}*/
-
-			if(id.length > 0){
-				return id;
-			}
+			if(id.length > 0) return id;
 			else return null;
 		},
 		inputLabel: function(){
-			var self = this;
-
-			if(this.formField){
-				return this.formField.FieldName;
-			}
-			/*else if(this.labelText != null){
-				return this.labelText;
-			}
-			else if(this.labelPropname != null && this.formField.hasOwnProperty(self.labelPropname)){
-				return this.formField[self.labelPropname];
-			}*/
+			if(this.valObj) return this.valObj.Label;
 			else return null;
 		},
 		inputDesc: function(){
 			var self = this;
-			if(this.formField){
-				return this.formField.FieldDesc;
-			}
-			/*else if(this.descPropname != null && this.formField.hasOwnProperty(self.descPropname)){
-				return this.formField[self.descPropname];
-			}*/
+			if(this.storeName === 'fields') return store.getObjProp(self.descPayload);
+			//else if(this.descPropname != null && this.valObj.hasOwnProperty(self.descPropname)) return this.valObj[self.descPropname];
 			else return null;
 		},
 		hasHint: function(){
-			if (this.inputDesc){
-				return true;
-			}
+			if (this.inputDesc) return true;
 			else return false;
 		},
-
 		wasChanged: function(){
-			// both null or is equal for false
-			if( this.valObj.updateDB ){
-				return true;
-			}
+			if(this.valObj.updateDB) return true;
 			else return false;
 		},
 		inputColor: function(){
-			if(this.wasChanged){
-				return 'green';
-			}
+			if(this.wasChanged) return 'green';
 		},
 		isSelected: function(){
 		},
@@ -237,10 +193,19 @@ Vue.component('psofia-checkbox', {
 			// don't need for checkbox, is easy to tell
 		},
 		logMsg: function(){
-			return this.valPropname + "\n" +
-			" - original: " + this.valToText(this.origValObj) + "\n" + 
-			" - current: " + this.valToText(this.valObj) + "\n" +
-			" - input: " + this.valToText(this.inputValObj);
+			if(!this.isDialog){
+				return this.valPropname + "\n" +
+				" - original: " + this.valToText(this.origValObj) + "\n" + 
+				" - current: " + this.valToText(this.valObj) + "\n" +
+				" - input: " + this.valToText(this.inputValObj);
+			}
+			else{
+				return this.valPropname + "\n" +
+				" - original: " + this.valToText(this.origValObj) + "\n" + 
+				" - form: " + this.valToText(this.formValObj) + "\n" +
+				" - dialog: " + this.valToText(this.valObj) + "\n" +
+				" - input: " + this.valToText(this.inputValObj);
+			}
 		}
 	},
 	methods:{
@@ -252,10 +217,12 @@ Vue.component('psofia-checkbox', {
 			var self = this;
 
 			this.inputValObj = clone(self.valObj);
-			this.inputVal = this.inputValObj.val;
-			this.loading = false;
+			Vue.nextTick(function(){
+				self.inputVal = self.inputValObj.val;
+				self.loading = false;
+			});
 		},
-		// @change (true/false)
+		// @update == @change for boolean (true/false)
 		changeValue: function(newValue){
 			var self = this;
 			if(this.debug) console.log("checkbox " + this.inputID + " @input " + newValue);
@@ -264,11 +231,9 @@ Vue.component('psofia-checkbox', {
 			if(!(newValue)){
 				newVal = false;
 			}
-			this.inputValObj.val = newVal;
-			this.inputValObj.dbVal = newVal;
 			this.inputValObj.displayVal = newVal.toString();
-
-			console.log(this.inputValObj);
+			this.inputValObj.dbVal = newVal;
+			this.inputValObj.val = newVal;
 			
 			var payload3 = Object.assign({}, self.payload, {valObj: self.inputValObj});
 			store.updateObjProp(payload3);
@@ -297,7 +262,7 @@ Vue.component('psofia-checkbox', {
 		},
 		// @update:error (boolean)
 		updateErr: function(newValue){
-			if(this.debug) console.log("checkbox " + this.inputID + " @update:error " + newValue);
+			console.error("checkbox " + this.inputID + " @update:error " + newValue);
 		},
 		selectAll: function (event) {
 			// Workaround for Safari bug

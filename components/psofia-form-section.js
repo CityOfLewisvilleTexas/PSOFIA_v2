@@ -11,8 +11,8 @@ Vue.component('psofia-form-section', {
 			<v-card class="card--flex-toolbar">
 				<v-card-title primary-title>
 					<div>
-						<h3 v-if="!(section.HideSectionTitle)" class="headline mb-0">{{section.SectionTitle}}</h3>
-						<div v-if="section.SectionDesc" v-html="section.SectionDesc" style="white-space: pre-wrap;"></div>
+						<h3 v-if="!(section.HideSectionTitle.val)" class="headline mb-0">{{section.SectionTitle.displayVal}}</h3>
+						<div v-if="section.SectionDesc.displayVal" v-html="section.SectionDesc.displayVal" style="white-space: pre-wrap;"></div>
 					</div>
 				</v-card-title>
 				<v-card-text>
@@ -28,10 +28,33 @@ Vue.component('psofia-form-section', {
 	//<form-section v-for="sub in subSections"></form-section>
 	data: function(){
 		return{
-			sharedState: store.state,
+            sharedState: store.state,
+            isLoading: true,
+            debug: true,
 		}
 	},
 	computed: {
+		sharedForm: function(){
+            return this.sharedState.form;
+        },
+        sharedCols: function(){
+            return this.sharedState.columns;
+        },
+		stateLoading: function(){
+            return this.sharedState.isLoading;
+        },
+        formLoading: function(){
+            return this.sharedState.form.isLoading;
+        },
+        colsLoading: function(){
+            return this.sharedState.columns.isLoading;
+        },
+        storeLoading: function(){
+            return this.stateLoading && this.formLoading && this.colsLoading;
+        },
+        appLoading: function(){
+            return this.storeLoading && this.isLoading;
+        },
 		payload: function(){
 			var self = this;
 			return {id:self.formSectionId};
@@ -50,11 +73,5 @@ Vue.component('psofia-form-section', {
 		},
 	},
 	methods: {
-		filterFields:function (fieldTypeID){
-			var self = this;
-			return this.orderedFields.filter(function(f){
-				return f.FieldTypeID == fieldTypeID;
-			});
-		}
 	}
 })
