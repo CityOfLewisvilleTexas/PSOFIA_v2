@@ -6,7 +6,6 @@ var store = {
         isLoading: true,
         lastLoad: null,
         lastChange: null,
-        needsRefresh: false,
         connections:{
             isOnLine: true,
             unsentReq: false,
@@ -63,7 +62,7 @@ var store = {
                 _lastLoad:  {formsList:null, recordsList:null},
             formsList: [],          //RESULT SET: Forms (used in List - Forms)
             recordsList: [],        //RESULT SET: Records (used in List - Records)
-            recordsList_formID: null,   //ugh
+            //recordsList_formID: null,   //ugh
             recordsList_formData: null,
             recordsList_fields: [],        //RESULT SET: FormFields (used in List - Records)
             recordsList_vsOptions: [],        //RESULT SET: FormVSOptions (used in List - Records)
@@ -71,30 +70,36 @@ var store = {
             vsOptionsList: [],        //RESULT SET: ValSetOptions (used in List - Val Sets)
             settings: {
                 formsList:{
-                    searchStr: '', sortBy: [], sortDesc: [],
-                    showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
+                    tableSettings:{
+                        showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
+                        searchStr: '', sortBy: [], sortDesc: [],
+                    },
                     wsProps:{ deptID: null, keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ deptID: null, keepInactive: false, onlyInactive: false, },
+                    currentWSProps:{ deptID: null, keepInactive: false, onlyInactive: false, },
                 },
                 recordsList:{
-                    formID: null, searchStr: '', sortBy: [], sortDesc: [],
-                    //paramSpecific: { default: {searchStr: '', sortBy: [], sortDesc: [],}, },        //[formID]: {searchStr: '', sortBy: [], sortDesc: [],},
-                    showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'left', showColFilters: false, perPage: null,
+                    tableSettings:{
+                        showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'left', showColFilters: false, perPage: null,
+                        formID: null, searchStr: '', sortBy: [], sortDesc: [],  //paramSpecific - alt: { default: {searchStr: '', sortBy: [], sortDesc: [],}, },        //[formID]: {searchStr: '', sortBy: [], sortDesc: [],},
+                    },
                     wsProps:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, },
+                    currentWSProps:{ formID: null, count: 50, historicalSearch: null, historicalSearchStart: null, historicalSearchEnd: null, historicalSearchColumn: null, keepInactive: false, onlyInactive: false, },
                 },
                 valSetsList:{
-                    searchStr: '', sortBy: [], sortDesc: [],
-                    showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
+                    tableSettings:{
+                        showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
+                        searchStr: '', sortBy: [], sortDesc: [],
+                    },
                     wsProps:{ keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ keepInactive: false, onlyInactive: false, },
+                    currentWSProps:{ keepInactive: false, onlyInactive: false, },
                 },
                 vsOptionsList:{
-                    valSetID: null, searchStr: '', sortBy: [], sortDesc: [],
-                    //paramSpecific: { default: {searchStr: '', sortBy: [], sortDesc: [],}, },        //[valSetID]: {searchStr: '', sortBy: [], sortDesc: [],},
-                    showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
+                    tableSettings:{
+                        showInactive: false, showDetails: false, showIDCol: false, actionsPosition: 'right', showColFilters: false, perPage: null,
+                        valSetID: null, searchStr: '', sortBy: [], sortDesc: [],  //paramSpecific - alt: { default: {searchStr: '', sortBy: [], sortDesc: [],}, },        //[valSetID]: {searchStr: '', sortBy: [], sortDesc: [],},
+                    },
                     wsProps:{ valSetID: null, keepInactive: false, onlyInactive: false, },
-                    wsProps_returned:{ valSetID: null, keepInactive: false, onlyInactive: false, },
+                    currentWSProps:{ valSetID: null, keepInactive: false, onlyInactive: false, },
                 },
             },
         },
@@ -403,15 +408,18 @@ var store = {
         }
     },
 
-/* TABLE SETTINGS */
+/* SETTINGS: TABLE SETTINGS, WS PROPS */
+    getStoreSettings: function(payload){
+        if(payload.hasOwnProperty('storeName')){
+            if(this.state.datatables.settings.hasOwnProperty(payload.storeName)){
+                return this.state.datatables.settings[payload.storeName];
+            } else if (this.errDebug) console.error("ERROR: getSettings:\t\tpayload - no settings for storename - " + payload.storeName);
+        } else if (this.errDebug) console.error("ERROR: getSettings:\t\tpayload - no storename");
+    },
     getTableSettings: function(payload){
         var tableSettings = null;
-         if(payload.hasOwnProperty('storeName')){
-            if(this.state.datatables.settings.hasOwnProperty(payload.storeName)){
-                tableSettings = this.state.datatables.settings[payload.storeName];
-            }
-        }
-        else if (this.errDebug) console.error("ERROR: getTableSettings:\t\tpayload - storename - " + this.payloadToStr(payload));
+        var storeSettings = this.getStoreSettings(payload);
+        if(storeSettings) tableSettings = storeSettings.tableSettings;
         return tableSettings;
     },
     setTableSettings: function(payload){
@@ -450,21 +458,20 @@ var store = {
     },
     getWSProps: function(payload){
         var wsProps = null;
-        if(payload.hasOwnProperty('storeName')){
-            if(this.state.datatables.settings.hasOwnProperty(payload.storeName) && this.state.datatables.settings[payload.storeName].hasOwnProperty('wsProps')){
-                wsProps = this.state.datatables.settings[payload.storeName].wsProps;
-            }
-        }
-        else if (this.errDebug) console.error("ERROR: getWSProps:\t\tpayload - storename - " + this.payloadToStr(payload));
+        var storeSettings = this.getStoreSettings(payload);
+        if(storeSettings) wsProps = storeSettings.wsProps;
         return wsProps;
+    },
+    getCurrentWSProps: function(payload){
+        var currentWSProps = null;
+        var storeSettings = this.getStoreSettings(payload);
+        if(storeSettings) currentWSProps = storeSettings.currentWSProps;
+        return currentWSProps;
     },
     setWSProps: function(payload){
         var returnVal = false;
-        //if (payload.hasOwnProperty('stateName') && payload.stateName) stateName = payload.stateName;
-        if(this.debug) console.log('setWSProps')
-
         var wsProps = this.getWSProps(payload);
-        if(this.debug) console.log(wsProps)
+        if(this.debug) console.log('setWSProps - ' + JSON.stringify(payload))
         if(wsProps){
             returnVal = true;
             if (payload.hasOwnProperty('count')) wsProps.count = payload.count;
@@ -474,29 +481,63 @@ var store = {
             if (payload.hasOwnProperty('column')) wsProps.historicalSearchColumn = payload.column;
             if (payload.hasOwnProperty('keepInactive')) wsProps.keepInactive = payload.keepInactive;
             if (payload.hasOwnProperty('onlyInactive')) wsProps.onlyInactive = payload.onlyInactive;
-
             if(payload.hasOwnProperty('formID')){
                 if(wsProps.hasOwnProperty('formID')) wsProps.formID = payload.formID;
                 else if(this.errDebug) console.error("ERROR: setWSProps:\t\tpayload has formID by no formID on store wsProps:" + this.payloadToStr(payload));
             }
+            if(this.debug) console.log(wsProps);
         }
         return returnVal;
     },
-
-    setReturnFormID(formID){
-        if(this.debug) console.log('setReturnFormID')
-        this.state.datatables.recordsList_formID = formID;
+    copyWSPropsToCurrent: function(payload){
+        var returnVal = false;
+        var wsProps = this.getWSProps(payload);
+        var currentWSProps = this.getCurrentWSProps(payload);
+        if(wsProps && currentWSProps){
+            returnVal = true;
+            currentWSProps = Object.assign(currentWSProps, wsProps);
+        }
+        console.log(currentWSProps);
+        return returnVal;
     },
-    getStoreHasData(payload){
-        var stateName = 'datatables', storeName = null
-        if(payload.hasOwnProperty('storeName')) storeName = payload.storeName;
-        if(storeName == 'recordsList'){
-            var wsProps = this.getWSProps(payload);
-            if(wsProps){
-                return (this.state[stateName].settings[storeName].wsProps.formID == this.state[stateName].recordsList_formID); 
+    getWSPropsEqual(payload){
+        var returnVal = true;
+        var wsProps = this.getWSProps(payload);
+        var currentWSProps = this.getCurrentWSProps(payload);
+        var keys1, keys2;
+        if(wsProps && currentWSProps){
+            console.log('? : ' + wsProps.count + ' = ' + currentWSProps.count)
+            keys1 = Object.keys(wsProps);
+            keys2 = Object.keys(currentWSProps);
+            console.log(keys1)
+            console.log(keys2)
+            if(keys1.length !== keys2.length) returnVal = false;
+            keys1.forEach(function(key, index){
+                console.log(wsProps[key] + ' =?= ' + currentWSProps[key])
+                if(wsProps[key] !== currentWSProps[key]) returnVal = false;
+            })
+            return true;
+        } else if(this.state.errDebug) console.error("ERROR: wsPropsHasChange:\t\tpayload - " + JSON.stringify(payload));
+    },
+/* WEBSERVICE RETURN */
+    newWebserviceRequest(payload){
+        var areEqual = this.getWSPropsEqual(payload);
+        console.log("wsProps = currentWSProps ? " + areEqual)
+        return !(areEqual);
+    },
+    canShowData(payload){
+        var returnVal = true;
+        var wsProps = this.getWSProps(payload);
+        var currentWSProps = this.getCurrentWSProps(payload);
+        if(wsProps && currentWSProps){
+            if(payload.storeName == 'formsList'){
+                if(wsProps.deptID != currentWSProps.deptID) returnVal = false
+            }
+            else if(payload.storeName == 'recordsList'){
+                if(wsProps.formID != currentWSProps.formID) returnVal = false
             }
         }
-        else return true;
+        return returnVal;
     },
 
 /* STORE/DATA OBJ(S) - GETS */

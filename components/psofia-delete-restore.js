@@ -11,7 +11,7 @@ Vue.component('psofia-delete-restore', {
 			required: true
 		},
 		storeId:{	// FormID, ID (NOT RECORDNUMBER)
-			type: String,
+			type: Number,
 			required: false
 		},
     },
@@ -20,8 +20,8 @@ Vue.component('psofia-delete-restore', {
             <v-card>
                 <v-card-title class="headline" primary-title>
                 	<span v-if="!returnValues && failed == 0">{{setActive ? 'Restore ' : 'Delete '}}{{showTable=='forms' ? 'Form' : 'Record'}}</span>
-                	<span v-else>{{showTable=='forms' ? 'Form ' : 'Record '}}{{setActive ? 'Not Restored' : 'Not Deleted'}}</span>
-                	<span v-if="returnValues && failed == 0">{{showTable=='forms' ? 'Form ' : 'Record '}}{{setActive ? 'Not Restored' : 'Not Deleted'}}</span>
+                	<span v-if="returnValues && failed == 0">{{showTable=='forms' ? 'Form ' : 'Record '}}{{setActive ? 'Restored' : 'Deleted'}}</span>
+                    <span v-if="failed > 0">{{showTable=='forms' ? 'Form ' : 'Record '}}{{setActive ? 'Not Restored' : 'Not Deleted'}}</span>
                 </v-card-title>
 
                 <v-card-text v-if="!isExecuting">
