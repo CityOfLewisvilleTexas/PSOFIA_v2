@@ -79,7 +79,7 @@ Vue.component('psofia-delete-restore', {
             failed: 0,
             closeTimeout: null,
             
-            debug: true,
+            debug: false,
         }
     },
     created: function(){

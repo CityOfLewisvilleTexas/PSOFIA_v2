@@ -56,7 +56,7 @@ Vue.component('psofia-table-settings', {
             showIDCol: false,
             showColFilters: false,
             
-            debug: true,
+            debug: false,
         }
     },
     created: function(){

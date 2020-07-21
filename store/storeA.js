@@ -1,5 +1,5 @@
 var store = {
-    debug: true,
+    debug: false,
     warnDebug: true,
     errDebug: true,
     state: {

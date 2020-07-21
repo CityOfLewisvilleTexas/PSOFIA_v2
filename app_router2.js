@@ -152,7 +152,7 @@ var MainNav = {
             accountMenu: false,
             checkConnectionTimeout: null,
             wsGetTimeout: null,
-            debug: true,
+            debug: false,
         }
     },
 
@@ -766,7 +766,7 @@ var List = {
             windowHeight: 0,
             windowWidth: 0,
             isVariableScreen: false,
-            debug: true,
+            debug: false,
         }
     },
 
@@ -2497,7 +2497,7 @@ var routes = [
                 title: 'Forms'
             }*/
         },
-        { path: 'home/dept/:deptid',
+        /*{ path: 'home/dept/:deptid',
             name: 'formsListDept',
             component: List,
         },
@@ -2520,7 +2520,7 @@ var routes = [
         { path: 'build/valset/:vsid',
             name: 'editSet',
             component: BuildVS
-        },
+        },*/
         { path: 'form/:formid',
             name: 'recordsList',
             component: List
@@ -2529,7 +2529,7 @@ var routes = [
             name: 'recordsListActions',
             component: List
         },
-        { path: 'form/:formid/entry',
+        /*{ path: 'form/:formid/entry',
             name: 'newRecord',
             component: Entry
         },
@@ -2540,7 +2540,7 @@ var routes = [
         { path: 'form/:formid/view/:recordnum',
             name: 'viewRecord',
             component: EntryView
-        },
+        },*/
         { path: '*',
             redirect: 'home'
         },
