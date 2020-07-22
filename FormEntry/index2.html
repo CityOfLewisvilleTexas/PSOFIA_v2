@@ -10,8 +10,8 @@
     <link href="https://fonts.googleapis.com/css?family=Product+Sans:400,400i,700,700i" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- styles -->
-    <link rel="stylesheet" title="styles" href="../materialize_v0.100.2/css/materialize.min.css">
-    <link rel="stylesheet" type="text/css" href="style.css?4" media="screen" />
+    <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+    <link rel="stylesheet" title="styles" href="../materialize/css/materialize.min.css">
     <!-- Vue -->
     <script src="https://unpkg.com/vue/dist/vue.js"></script>
     <!-- axios -->
@@ -19,18 +19,16 @@
     <!-- JQuery -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <!-- materialize -->
-    <script src="../materialize_v0.100.2/js/materialize.min.js"></script>
+    <script src="../materialize/js/materialize.js"></script>
 	<!-- moment -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js"></script>
+	<script type="text/javascript" src="../moment/moment.js"></script>
     <!-- city oauth -->
 	<script>
 		var _topLevelDomain = window.location.host.split(".")[0]
 		var _colSecurityUrl = ""
 		if (_topLevelDomain == "apps"){
 			_colSecurityUrl = "http://apps.cityoflewisville.com/COLSecurity/col_security.js"
-		}else if (_topLevelDomain == "eservices"){
-            _colSecurityUrl = "http://eservices.cityoflewisville.com/COLSecurity/col_security.js"
-        }else{
+		}else{
 			_colSecurityUrl = "https://forms.cityoflewisville.com/oauth/col_security.js"
 		}
 		var _scriptElement = document.createElement('script');
@@ -41,22 +39,22 @@
     <!-- mobile friendly -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	
-	<script src="../components/form-section.js?4"></script>
-    <script src="../components/form-sub-section.js?4"></script>
-	<script src="../components/form-field.js?4"></script>
+	<script src="../components/form-section.js"></script>
+    <script src="../components/form-sub-section.js"></script>
+	<script src="../components/form-field.js"></script>
     
-    <script src="../components/number-field_req.js?4"></script>
-    <script src="../components/checkbox-field_req.js?4"></script>
-    <script src="../components/select-field_req.js?4"></script>
-    <script src="../components/select-field-category.js?4"></script>
+    <script src="../components/number-field.js"></script>
+    <script src="../components/checkbox-field.js"></script>
+    <script src="../components/select-field.js"></script>
+    <script src="../components/select-field-category.js"></script>
 
-    <script src="../components/text-field_req.js?4"></script>
-    <script src="../components/email-field_req.js?4"></script>
-    <script src="../components/text-area-field_req.js?4"></script>
+    <script src="../components/text-field.js"></script>
+    <script src="../components/email-field.js"></script>
+    <script src="../components/text-area-field.js"></script>
 
-	<script src="../components/date-field_req.js?4"></script>
-    <script src="../components/time-field_req.js?4"></script>
-    <!--<script src="../components/year-field.js?4"></script>-->
+	<script src="../components/date-field.js"></script>
+    <!--<script src="../components/time-field.js"></script>-->
+    <script src="../components/year-field.js"></script>
 </head>
 
 <body>
@@ -76,32 +74,29 @@
             <!-- welcome message {{ hello }} -->
             <div id="hello" class="row center-align">{{ hello }} </div>
             <div class="col s12 m10 l8 xl6 offset-m1 offset-l2 offset-xl3">
-                <div id="form" class="row card z-depth-3" v-show="!isLoading">
+                <div id="form" class="row card z-depth-3" v-if="!isLoading">
                     <div class="col s10 offset-s1 card-title">
-                        <h4 class="bold">{{data.FormData.FormName}}</h4>
+                        <h4 class="bold">{{data.FormData[0].FormName}}</h4>
                     </div>
 					
                     <!-- section -->
-					<form-section v-for="s in formSections" :key="s.FormSectionID" :section="s" :sub-sections="getSubSections(s)" :fields="getSectionFields(s)" :vs-sets="data.ValidationSets" :vs-options="data.VSOptions" :highlight-required="highlightRequired">
+					<form-section v-for="s in formSections" :key="s.FormSectionID" :section="s" :sub-sections="getSubSections(s)" :fields="getSectionFields(s)" :vs-sets="data.ValidationSets" :vs-options="data.VSOptions">
 					</form-section>
 					<!-- section end -->
+				  
                 </div>
             </div>
         </div>
 
-        <div class="fixed-action-btn">
-            <a class="btn-floating btn-large red" :disabled="!readyToSubmit" v-if="!isSubmitting" v-on:click="submitForm()">
+        <div class="fixed-action-btn" v-on:click="submitForm()">
+            <a class="btn-floating btn-large red" :disabled="newFormValues.length == 0" v-if="!isSubmitting">
               <i class="large material-icons">done</i>
             </a>
         </div>
-        <div class="fixed-action-btn changes-fab">
-            <a class="btn-floating btn orange" v-if="!valuesInRequiredFields && newFormValues.length > 0" v-on:click="showRequired()">
-              <i class="material-icons">warning</i>
-            </a>
-        </div>
+
     </div>
 
     <!-- source code -->
-    <script type="text/javascript" src="app_req.js?6"></script>
+    <script type="text/javascript" src="app.js"></script>
 </body>
 </html>

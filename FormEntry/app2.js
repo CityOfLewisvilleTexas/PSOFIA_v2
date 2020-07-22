@@ -5,12 +5,13 @@ const eventHub = new Vue();
 var app = new Vue({
     el: "#app",
     data: {
-    	useremail: '',
+		useremail: '',
         username: '',
         hello: 'Hello!',
         isLoading: true,
         isSubmitting: false,
         editing: false,
+		showInvalid: false,
 		
 		formID: '',
 		recordNum: '',
@@ -32,9 +33,6 @@ var app = new Vue({
     },
 	computed:{
 		// ordered sections
-		readyToSubmit: function(){
-			return (this.valuesInRequiredFields && this.newFormValues.length > 0);
-		},
 		formSections: function(){
 			return this.data.Sections.sort(function(a, b){
 				return a.SectionOrder - b.SectionOrder;
@@ -97,19 +95,15 @@ var app = new Vue({
 				auth_token: localStorage.colAuthToken
 			},
 			function(data){
-				app.data.FormData = data.FormData[0];
+				app.data.FormData = data.FormData;
 				app.data.Sections = data.Sections;
 				app.data.SubSections = data.SubSections;
-				//app.data.Fields = data.Fields;
-				var fieldData = data.Fields;
+				app.data.Fields = data.Fields;
 				app.data.ValidationSets = data.ValidationSets;
 				app.data.VSOptions = data.VSOptions;
 				app.data.Record = data.Record;
-
-				var currentMoment = moment();
 				
-				//app.data.Fields.forEach(function(field){
-				fieldData.forEach(function(field){
+				app.data.Fields.forEach(function(field){
 					Vue.set(field, 'updateDB', false);
 					if(app.data.Record && app.data.Record.length > 0){
 						
@@ -117,30 +111,14 @@ var app = new Vue({
 						
 						switch(field.FieldType){
 							case 'DATE':
-								if(app.data.Record[0][field.FieldHTMLID] && app.data.Record[0][field.FieldHTMLID] != '1900-01-01T00:00:00.000Z'){
-									Vue.set(field, 'fieldVal', moment.utc(app.data.Record[0][field.FieldHTMLID]).format('YYYY-MM-DD'));
-								}
-								else{
-									Vue.set(field, 'fieldVal', '');
-								}
+								Vue.set(field, 'fieldVal', moment(app.data.Record[0][field.FieldHTMLID], 'YYYY-MM-DD').format('YYYY-MM-DD'));
 								break;
 							case 'YEAR':
-								if(app.data.Record[0][field.FieldHTMLID]){
-									Vue.set(field, 'fieldVal', moment.utc(app.data.Record[0][field.FieldHTMLID]).format('YYYY'));
-								}
-								else{
-									Vue.set(field, 'fieldVal', '');
-								}
+								Vue.set(field, 'fieldVal', moment(app.data.Record[0][field.FieldHTMLID], 'YYYY').format('YYYY'));
 								break;
 							case 'TIME':
 								//???
-								//console.log(moment(app.data.Record[0][field.FieldHTMLID]));
-								if(app.data.Record[0][field.FieldHTMLID]){
-									Vue.set(field, 'fieldVal', moment.utc(app.data.Record[0][field.FieldHTMLID]).format('HH:mm'));
-								}
-								else{
-									Vue.set(field, 'fieldVal', '');
-								}
+								Vue.set(field, 'fieldVal', moment(app.data.Record[0][field.FieldHTMLID]).HTML5_FMT.TIME_SECONDS);
 								break;
 							case 'CHECKBOX':
 								if(app.data.Record[0][field.FieldHTMLID]){
@@ -156,36 +134,20 @@ var app = new Vue({
 						}
 					}
 					else{
+						var currentDate = new Date();
 						switch(field.FieldType){
 							case 'DATE':
-								if(field.PrimaryDateField == 1){
-									Vue.set(field, 'fieldVal', currentMoment.format('YYYY-MM-DD'));
-									field.updateDB = true;
-								}
-								else{
-									Vue.set(field, 'fieldVal', '');
-									field.updateDB = false;
-								}
+								Vue.set(field, 'fieldVal', moment(currentDate).format('YYYY-MM-DD'));
+								field.updateDB = true;
 								break;
 							case 'YEAR':
-								//if(field.SectionOrder == 1){
-									Vue.set(field, 'fieldVal', currentMoment.format('YYYY'));
-									field.updateDB = true;
-								//}
-								/*else{
-									Vue.set(field, 'fieldVal', '');
-									field.updateDB = false;
-								}*/
+								Vue.set(field, 'fieldVal', moment(currentDate).format('YYYY'));
+								field.updateDB = true;
 								break;
 							case 'TIME':
-								/*if(field.SectionOrder == 1){
-									Vue.set(field, 'fieldVal', currentMoment.format('HH:mm'));
-									field.updateDB = true;
-								}*/
-								//else{
-									Vue.set(field, 'fieldVal', '');
-									field.updateDB = false;
-								//}
+								//???
+								Vue.set(field, 'fieldVal', moment(currentDate).HTML5_FMT.TIME_SECONDS);
+								field.updateDB = true;
 								break;
 							case 'CHECKBOX':
 								Vue.set(field, 'fieldVal', false);
@@ -207,15 +169,8 @@ var app = new Vue({
 				})
 
 				Vue.nextTick(function() {
-					app.data.Fields = fieldData;
-					Vue.nextTick(function() {
-						Materialize.updateTextFields()
-						//https://github.com/Dogfalo/materialize/issues/6336
-						$(document).on("click", ".select-wrapper", function (event) {
-							event.stopPropagation();
-						});
-					});
-				});
+					Materialize.updateTextFields()
+				})
 				
 				app.isLoading = false;
 				
@@ -335,22 +290,14 @@ var app = new Vue({
         },*/
 
 		// get username from COL if it exists
-		// assumes localstorage.colEmail has been populated, if they are navigating to this page without going through apps/evals, this may not be set with the current colsecurity (colEmail is set last, while the page is loading)
         checkForUsername: function() {
-        	this.useremail = localStorage.colEmail;
-
+			this.useremail = localStorage.colEmail;
             // ajax
             $.get('https://query.cityoflewisville.com/ActiveDirectory/getUserByEmail/' + localStorage.colEmail, function(data) {
 
-                // set username, set hello message (above form)
-                app.username = (data.length) ? data[0].givenName : ''
-
-                /*
-                app.hello = (app.username) ? 'Hello, ' + app.username + '!' : 'Hello!'
-
-                // warning message
-                if (!app.username) alert('Could not verify identity. Form may not submit correctly.')
-                */
+                // set username
+                app.username = (data.length) ? data[0].givenName : '';
+																					  
 
                 Vue.nextTick(function(){
                 	// set hello message to username (above form)
@@ -359,7 +306,7 @@ var app = new Vue({
 	                }
 	                // set hello message to useremail (above form); warning toast
 	                else if (app.useremail){
-	                	Materialize.toast('No AD account found for ' + app.useremail + '. Form can still be submitted.', 5000, 'rounded');
+	                	Materialize.toast('No username found for ' + app.useremail, 5000, 'rounded');
 	                	app.hello = 'Hello, ' + app.useremail + '!'
 	                }
 	                // warning message
@@ -369,7 +316,6 @@ var app = new Vue({
 	                }
 
 				});
-
                 // check for record number
                 //app.fetchRecord()
             })
@@ -405,6 +351,23 @@ var app = new Vue({
 				else{
 					f.updateDB = true;
 				}
+				if(f.Required && payload.val == ''){
+					console.log('required');
+					if(f.FieldType != 'SELECT'){
+						$('#' + f.FieldHTMLID).addClass('needs-value');
+					}
+					else{
+						$('#' + f.FieldHTMLID).siblings().filter(':text').addClass('needs-value');
+					}
+				}
+				else if(f.Required && payload.val != ''){
+					if(f.FieldType != 'SELECT'){
+						$('#' + f.FieldHTMLID).removeClass('needs-value');
+					}
+					else{
+						$('#' + f.FieldHTMLID).siblings().filter(':text').removeClass('needs-value');
+					}
+				}
 			}
 			else{
 				console.log('ERROR');
@@ -414,30 +377,39 @@ var app = new Vue({
         // submit the form
         submitForm: function() {
 			console.log("submitform");
-			//console.log(this.newFormValues);
-			// required fields
-			if(!this.valuesInRequiredFields){
-				//Hightlight required fields
-				alert("Required Fields have not been filled out");
-				return;
+			
+			if (this.newFormValues.length == 0){
+				Materialize.toast('Data has already been saved', 5000, 'rounded')
 			}
-			/*else if (this.newFormValues.length == 0){
-				Materialize.toast('No changes made', 5000, 'rounded')
-			}*/
-			/* Username cannot be required if people without active directory are allowed to submit form
-			// error verifying idenltity
-			else if (!app.username){
+			// required fields
+			else if(!this.valuesInRequiredFields){
+				//Hightlight required fields
+				this.requiredFields.forEach(function(field){
+					if(field.FieldType != 'CHECKBOX' && field.Required && field.fieldVal == ''){
+						console.log(field.FieldHTMLID);
+						if(field.FieldType != 'SELECT'){
+							$('#' + field.FieldHTMLID).addClass('needs-value');
+						}
+						else{
+							$('#' + field.FieldHTMLID).siblings().filter(':text').addClass('needs-value');
+						}
+					}
+				});
+
+				Materialize.toast('Please fill in the requied fields before submitting the form', 5000, 'rounded')
+			}
+			// error verifying identity
+			/*else if (!app.username){
 				// return
 			}*/
-			else{
+			else if (this.newFormValues.length > 0){
 
 				var psofiaData = JSON.stringify(this.newFormValues);
 
 				// one last error check
 				if (!psofiaData)
 				{
-					alert("ERROR");
-					return
+					return;
 				}
 
 				// "send off" the form, scroll to top, change the message
@@ -461,16 +433,10 @@ var app = new Vue({
 
 							// allows animation to finish (at least)
 							setTimeout(function() {
+								$('#form').removeClass('blurred')
+								alert('Success! ' + data.Message[0].SubmitMessage + '. Page must be reloaded.');
 								//app.isSubmitting = false
-								if(app.data.FormData.RefreshOnSubmit){
-									alert('Success! ' + data.Message[0].SubmitMessage + '. Entry must be reloaded.');
-									location.reload();
-								}
-								else{
-									$('#form').removeClass('blurred')
-									alert('Success! ' + data.Message[0].SubmitMessage + '. Page must be reloaded.');
-									insertParam('recordNumber', data.Message[0].RecordNumber);
-								}
+								insertParam('recordNumber', data.Message[0].RecordNumber);
 							}, 500)
 
 							// set this submission as the new backup
@@ -484,29 +450,20 @@ var app = new Vue({
 								app.hello = 'Hello, ' + app.username + '!'
 								Materialize.toast('Success! ' + data.Message[0].SubmitMessage, 5000, 'rounded')
 								app.isSubmitting = false
-							}, 500)
+							}, 500)ll
 							app.getFormEntry();
 						}
 						// fail
 						else if (data.Message[0].RecordNumber && (data.Message[0].SubmitOption == 3 || data.Message[0].SubmitOption == 4)){
-							alert('Error! ' + data.Message[0].SubmitMessage)
-							app.hello = 'Record Number Error'
-							$('#form').removeClass('blurred')
-							app.isSubmitting = false
+							Materialize.toast('Error! ' + data.Message[0].SubmitMessage, 5000, 'rounded')
 						}
 						else{
-							alert('Error submitting form - contact dev')
-							app.hello = 'Submission Error'
-							$('#form').removeClass('blurred')
-							app.isSubmitting = false
+							alert('Something may have gone wrong.')
 						}
 					})
 					.fail(function(data){
-						alert('Form cannot be submitted at this time. Please wait a few minutes and try again. Values may not be recovered if page is closed.')
 						console.log('Webservice fail');
-						app.hello = 'Webservice Error'
-						$('#form').removeClass('blurred')
-						app.isSubmitting = false
+						app.isLoading = false;
 					});
 			}
 		},

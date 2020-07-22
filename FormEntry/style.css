@@ -3,48 +3,12 @@ html, body, #app {
     height: 100%;
 }
 
-/* Character Counter */
-.character-counter {
-  min-height: 18px;
-  margin-top: -18px;
-}
-
-input:not([type]).needs-value, input:not([type]):focus.invalid,
-input[type=text].needs-value,
-input[type=text]:focus.needs-value,
-input[type=password].needs-value,
-input[type=password]:focus.needs-value,
-input[type=email].needs-value,
-input[type=email]:focus.needs-value,
-input[type=url].needs-value,
-input[type=url]:focus.needs-value,
-input[type=time].needs-value,
-input[type=time]:focus.needs-value,
-input[type=date].needs-value,
-input[type=date]:focus.needs-value,
-input[type=datetime].needs-value,
-input[type=datetime]:focus.needs-value,
-input[type=datetime-local].needs-value,
-input[type=datetime-local]:focus.needs-value,
-input[type=tel].needs-value,
-input[type=tel]:focus.needs-value,
-input[type=number].needs-value,
-input[type=number]:focus.needs-value,
-input[type=search].needs-value,
-input[type=search]:focus.needs-value,
-textarea.materialize-textarea.needs-value,
-textarea.materialize-textarea:focus.needs-value,
-.select-wrapper input.select-dropdown.needs-value {
-  border-bottom: 1px solid #F44336;
-  box-shadow: 0 1px 0 0 #F44336;
-}
-
 [v-cloak] { display: none }
 
 .date-label {
     margin: 0;
     font-size: 0.8rem;
-    color: #26a69a;
+    color: #9e9e9e;
 }
 
 #extended-toolbar {
@@ -109,4 +73,73 @@ textarea.materialize-textarea:focus.needs-value,
 .blurred {
     pointer-events: none;
     transform: translate3d(0, 120%, 0)
+}
+
+
+.long-label textarea.materialize-textarea {
+    padding-top: 1.6rem !important;
+}
+
+.input-field.field-is-required:not(.field-is-blank) label, .input-field.field-is-required:not(.field-is-blank) .date-label {
+    color: #9e9e9e;
+}
+
+.input-field.field-is-required.field-is-blank label, .input-field.field-is-required.field-is-blank .date-label {
+    color: red;
+}
+
+.input-field.field-is-blank .select-wrapper {
+    color: #9e9e9e !important;
+}
+
+.input-field.field-show-required input[type=text]:not(.browser-default),
+.input-field.field-show-required input[type=email]:not(.browser-default),
+.input-field.field-show-required input[type=url]:not(.browser-default),
+.input-field.field-show-required input[type=time]:not(.browser-default),
+.input-field.field-show-required input[type=date]:not(.browser-default),
+.input-field.field-show-required input[type=number]:not(.browser-default),
+.input-field.field-show-required textarea.materialize-textarea {
+    border-bottom: 1px solid red;
+    box-shadow: 0 1px 0 0 red;
+}
+
+.fixed-action-btn.changes-fab {
+    position: fixed;
+    right: 89px;
+    bottom: 23px;
+    padding-top: 15px;
+    margin-bottom: 0;
+    z-index: 997;
+}
+
+
+/*copy from toast container */
+.save-details-container {
+    display: block;
+    position: fixed;
+    z-index: 10000;
+}
+
+
+@media only screen and (max-width: 600px) {
+    .save-details-container {
+        min-width: 100%;
+        bottom: 0%;
+    }
+}
+
+@media only screen and (min-width: 601px) and (max-width: 992px) {
+    .save-details-container {
+        left: 5%;
+        bottom: 7%;
+        max-width: 90%;
+    }
+}
+
+@media only screen and (min-width: 993px) {
+    .save-details-container {
+        top: 10%;
+        right: 7%;
+        max-width: 86%;
+    }
 }

@@ -1,0 +1,111 @@
+html, body, #app {
+    margin: 0;
+    height: 100%;
+}
+
+/* Character Counter */
+.character-counter {
+  min-height: 18px;
+  margin-top: -18px;
+}
+
+input:not([type]).needs-value, input:not([type]):focus.invalid,
+input[type=text].needs-value,
+input[type=text]:focus.needs-value,
+input[type=password].needs-value,
+input[type=password]:focus.needs-value,
+input[type=email].needs-value,
+input[type=email]:focus.needs-value,
+input[type=url].needs-value,
+input[type=url]:focus.needs-value,
+input[type=time].needs-value,
+input[type=time]:focus.needs-value,
+input[type=date].needs-value,
+input[type=date]:focus.needs-value,
+input[type=datetime].needs-value,
+input[type=datetime]:focus.needs-value,
+input[type=datetime-local].needs-value,
+input[type=datetime-local]:focus.needs-value,
+input[type=tel].needs-value,
+input[type=tel]:focus.needs-value,
+input[type=number].needs-value,
+input[type=number]:focus.needs-value,
+input[type=search].needs-value,
+input[type=search]:focus.needs-value,
+textarea.materialize-textarea.needs-value,
+textarea.materialize-textarea:focus.needs-value,
+.select-wrapper input.select-dropdown.needs-value {
+  border-bottom: 1px solid #F44336;
+  box-shadow: 0 1px 0 0 #F44336;
+}
+[v-cloak] { display: none }
+
+.date-label {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #26a69a;
+}
+
+#extended-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 350px;
+    z-index: 0;
+}
+#extended-toolbar .progress {
+    position: absolute;
+    bottom: -16px;
+}
+#extended-toolbar .edge {
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    height: 4px;
+}
+
+#hello {
+    position: relative;
+    z-index: 1;
+    font-size: 30px;
+    color: white;
+    font-family: "Product Sans";
+    letter-spacing: 1px;
+}
+
+#form-holder {
+    margin-top: 20px;
+    margin-bottom: 0 !important;
+    padding-bottom: 20px !important;
+    overflow: visible;
+}
+
+#form {
+    padding: 24px 0;
+    transition: transform 0.5s ease-in-out;
+}
+
+.card-title {
+    border-bottom: 4px solid #e91e63;
+    margin-bottom: 20px;
+}
+
+#form .divider {
+    height: 2px !important;
+    width: 100% !important;
+    margin: 24px 0 !important;
+}
+
+#bottom20 {
+    margin-bottom: 20px;
+}
+
+#rnumber, #rnumber + label {
+    color: #9e9e9e !important;
+}
+
+.blurred {
+    pointer-events: none;
+    transform: translate3d(0, 120%, 0)
+}
