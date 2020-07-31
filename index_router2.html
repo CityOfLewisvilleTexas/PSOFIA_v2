@@ -24,16 +24,18 @@
     <!-- SCRIPTS -->
     <!--   DEBUG   -->
         <!-- Vue, Vue Router, Vuetify -->
-        <!--
+        
         <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
         <script src="https://unpkg.com/vue-router/dist/vue-router.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.js"></script>
-        -->
+        
     <!--   PRODUCTION   -->
         <!-- Vue, Vue Router, Vuetify -->
+        <!--
         <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
         <script src="https://unpkg.com/vue-router@3.3.4/dist/vue-router.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/vuetify@2.3.2/dist/vuetify.min.js"></script>
+        -->
     <!-- axios -->
         <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
@@ -50,9 +52,22 @@
     <!-- polyfills - Object.assign -->
     <script type="text/javascript" src="./scripts/polyfills.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.js"></script>
-    <!-- city oauth -->
-        <!--<script src="http://apps.cityoflewisville.com/COLSecurity/col_security.js"></script>-->
+    <!-- passive city oauth -->
+    <script>
+        var hostName = window.location.host.split(".")[0]
+        var colSecurityHost = hostName.toLowerCase()
+        if (window.location.protocol == "https:") colSecurityHost = 'forms'
+        var colSecurityUrl = window.location.protocol + '//' + colSecurityHost + '.cityoflewisville.com/COLSecurity/col_security_passive_unrequired.js';
+        var _scriptElement = document.createElement('script');
+        _scriptElement.src = colSecurityUrl
+        document.getElementsByTagName('head')[0].appendChild(_scriptElement);
+    </script>
     <!-- COMPONENTS -->
+    <!-- views -->
+    <script src="./views/main-comp.js"></script>
+    <script src="./views/list.js"></script>
+    <script src="./views/login.js"></script>
+    <script src="./views/build.js"></script>
     <!-- list -->
     <script src="./components/psofia-webservice-settings.js"></script>
     <script src="./components/psofia-delete-restore.js"></script>

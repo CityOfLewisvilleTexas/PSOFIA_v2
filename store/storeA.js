@@ -1,9 +1,10 @@
 var store = {
+    routeDebug: false,
     debug: false,
     warnDebug: true,
     errDebug: true,
     state: {
-        isLoading: true,
+        isLoading: false,
         lastLoad: null,
         lastChange: null,
         connections:{
@@ -18,10 +19,9 @@ var store = {
         nightView: false,
 
         user:{
-            isLoading: false,
-                _isLoading:  {token:false, email:false, adAccount:false},
-            lastLoad: null,
-                _lastLoad:  {token:null, email:null, adAccount:null},
+                _isLoading:  {local_storage:false, adAccount:false},
+                _lastLoad:  {local_storage:null, adAccount:null},
+            adChecked: false,
             token: null, email: null, username: null, firstName: null, lastName: null, inITS: false, hideDev: false,
         },
 
@@ -213,42 +213,55 @@ var store = {
     },
 
 /* ADD TO LIVE */
-    setUser(payload){
+    logout(payload){
+        this.state.user._isLoading.local_storage = true;
+        this.state.user._isLoading.adAccount = true;
+        this.clearUserLS(payload);
+        this.clearUserAD(payload);
+    },
+    setUserLS(payload){
         var loadDate = null;
         var token = null, email = null;
         if (payload.hasOwnProperty('token') && payload.token) token = payload.token;
         if(payload.hasOwnProperty('email') && payload.email) email = payload.email;
-        //if(payload.hasOwnProperty('firstName') && payload.firstName) firstName = payload.firstName;
 
         if(payload.hasOwnProperty('loadDate') && payload.loadDate) loadDate = payload.loadDate;
         else loadDate = moment();
 
-        if(token || email){
+        if(token && email){
             // compare, don't set is loading again if uneeded
-            if(!(this.state.user.token) || this.state.user.token != token){
-                this.state.user._isLoading.token = true;
-                this.state.user._isLoading.email = true;
+            if(!(this.state.user.token) || this.state.user.token != token || !(this.state.user.email) || this.state.user.email != email){
+                this.state.user._isLoading.local_storage = true;
                 this.state.user._isLoading.adAccount = true;
-                this.state.user._lastLoad.token = loadDate;
+                this.state.user.adChecked = false;
+                this.state.user._lastLoad.local_storage = loadDate;
                 this.state.user.token = token;
-
-                if (this.debug) console.log("USER TOKEN SET: " + token);
-                this.state.user._isLoading.token = false;
-            }
-            if(!(this.state.user.email) || this.state.user.email != email){
-                this.state.user._lastLoad.email = loadDate;
                 this.state.user.email = email;
 
-                if (this.debug) console.log("USER EMAIL SET: " + email);
-                this.state.user._isLoading.email = false;
+                if (this.debug) console.log('USER TOKEN & EMAIL SET: email: ' + email + '; token: ' + token);
+                this.state.user._isLoading.local_storage = false;
             }
+            // if store already has token & email, update load date
+            else this.state.user._lastLoad.local_storage = loadDate;
         }
+        else if(this.errDebug) console.error('ERROR: setUser:\t\tpayload - ' + JSON.stringify(payload));
     },
-    setUserADAccount(adData, loadDate){
-        var fName = null, lName = null, accountName = null, inITS = false, loadDate = null;
-        if(!loadDate) loadDate = moment();
+    clearUserLS(payload){
+        var loadDate = null;
+        if(payload.hasOwnProperty('loadDate') && payload.loadDate) loadDate = payload.loadDate;
+        else loadDate = moment();
+        this.state.user._lastLoad.local_storage = loadDate;
+        this.state.user.token = null;
+        this.state.user.email = null;
+        this.state.user._isLoading.local_storage = false;
+    },
+    setUserAD(payload){
+        var adData = null, loadDate = null, fName = null, lName = null, accountName = null, inITS = false;
+        if(payload.hasOwnProperty('adData') && payload.adData) adData = payload.adData;
+        if(payload.hasOwnProperty('loadDate') && payload.loadDate) loadDate = payload.loadDate;
+        else loadDate = moment();
 
-        if(adData.length && adData.length == 1){
+        if(adData && Array.isArray(adData) && adData.length == 1){
             if(adData[0].hasOwnProperty('givenName') && adData[0].givenName && adData[0].hasOwnProperty('sn') && adData[0].sn && adData[0].hasOwnProperty('sAMAccountName') && adData[0].sAMAccountName && adData[0].hasOwnProperty('description') && adData[0].description){
                 this.state.user._lastLoad.adAccount = loadDate;
 
@@ -256,43 +269,54 @@ var store = {
                 lName = adData[0].sn;
                 accountName = adData[0].sAMAccountName;
 
+                if(!(this.state.user.username) || this.state.user.username != accountName){
+                    this.state.user.username = accountName;
+                    if(this.debug) console.log('ACCOUNT NAME SET: ' + accountName);
+                }
                 if(!(this.state.user.firstName) || this.state.user.firstName != fName){
                     this.state.user.firstName = fName;
-                    if(this.debug) console.log("USER FIRST NAME SET: " + fName);
+                    if(this.debug) console.log('USER FIRST NAME SET: ' + fName);
                 }
                 if(!(this.state.user.lastName) || this.state.user.lastName != lName){
                     this.state.user.lastName = lName;
-                    if(this.debug) console.log("USER LAST NAME SET: " + lName);
+                    if(this.debug) console.log('USER LAST NAME SET: ' + lName);
                 }
-                if(!(this.state.user.username) || this.state.user.username != accountName){
-                    this.state.user.username = accountName;
-                }
-
                 if(adData[0].description == 'ITS'){
-                    this.state.user.inITS = true;
-                    if(this.debug) console.log("USER IN ITS");
-                    this.state.datatables.settings.recordsList.wsProps.keepInactive = true;
+                    if(this.debug) console.log('USER IS DEV');
                     this.setUserIsDev();
+                    this.state.user.inITS = true;
                 }
-                else this.state.user.inITS = false;
+                else{
+                    this.clearUserIsDev();
+                    this.state.user.inITS = false;
+                }
+                this.state.user.adChecked = true;
+                this.state.user._isLoading.adAccount = false;
             }
             else{
-                if(this.warnDebug) console.warn("WARNING: setUserADAccount:\t\tAll properties not returned");
-                this.state.user.firstName = null;
-                this.state.user.lastName = null;
-                this.state.user.username = null;
-                this.state.user.inITS = false;
+                if(this.warnDebug) console.warn('WARNING: setUserADAccount:\t\tAll properties not returned');
+                this.clearUserAD({ loadDate: loadDate });
             }
         }
         else{
-            if(this.errDebug && adData.length && adData.length > 1) console.error("ERROR: setUserADAccount:\t\tMore than one account returned");
-            else if(this.errDebug) console.error("ERROR: setUserADAccount:\t\tNO DATA");
-            this.state.user._lastLoad.adAccount = loadDate;
-            this.state.user.firstName = null;
-            this.state.user.lastName = null;
-            this.state.user.username = null;
-            this.state.user.inITS = false;
+            if(this.errDebug && adData && Array.isArray(adData) && adData.length > 1) console.error('ERROR: setUserADAccount:\t\tMore than one account returned');
+            else if(this.errDebug && adData && Array.isArray(adData)) console.error('ERROR: setUserADAccount:\t\tNO DATA');
+            else if(this.errDebug && !adData) console.error('setUserADAccount:\t\tERROR: setUserADAccount - getUserByEmail error');
+            this.clearUserAD({ loadDate: loadDate })
         }
+    },
+    clearUserAD(payload){
+        var loadDate = null;
+        if(payload.hasOwnProperty('loadDate') && payload.loadDate) loadDate = payload.loadDate;
+        else loadDate = moment();
+        this.state.user._lastLoad.adAccount = loadDate;
+        this.state.user.username = null;
+        this.state.user.firstName = null;
+        this.state.user.lastName = null;
+        this.clearUserIsDev();
+        this.state.user.inITS = false;
+        if(payload.hasOwnProperty('adChecked')) this.state.user.adChecked = payload.adChecked;
+        else this.state.user.adChecked = true;
         this.state.user._isLoading.adAccount = false;
     },
     setUserIsDev(){
@@ -300,8 +324,13 @@ var store = {
         this.state.datatables.settings.recordsList.wsProps.keepInactive = true;
         this.state.datatables.settings.valSetsList.wsProps.keepInactive = true;
     },
+    clearUserIsDev(){
+        this.state.datatables.settings.formsList.wsProps.keepInactive = false;
+        this.state.datatables.settings.recordsList.wsProps.keepInactive = false;
+        this.state.datatables.settings.valSetsList.wsProps.keepInactive = false;
+    },
     getUserIsLoading(){
-        return this.state.user._isLoading.token || this.state.user._isLoading.email || this.state.user._isLoading.adAccount;
+        return this.state.user._isLoading.local_storage || this.state.user._isLoading.adAccount;
     },
     getUserIsDev(){
         if(!this.state.user._isLoading.adAccount) return this.state.user.inITS;
@@ -310,17 +339,20 @@ var store = {
         if(!this.state.user._isLoading.adAccount) return this.state.user.username;
     },
     getUserEmail(){
-        if(!this.state.user._isLoading.email) return this.state.user.email;
+        if(!this.state.user._isLoading.local_storage) return this.state.user.email;
     },
     getUserEmailShort(){
         var email;
-        if(!this.state.user._isLoading.email && this.state.user.email){
+        if(!this.state.user._isLoading.local_storage && this.state.user.email){
             email = this.state.user.email;
             return email.substring(0, email.indexOf('@'));
         }
     },
     getUserFirstName(){
         if(!this.state.user._isLoading.adAccount) return this.state.user.firstName;
+    },
+    getUserLastName(){
+        if(!this.state.user._isLoading.adAccount) return this.state.user.lastName;
     },
 
 
@@ -497,7 +529,7 @@ var store = {
             returnVal = true;
             currentWSProps = Object.assign(currentWSProps, wsProps);
         }
-        console.log(currentWSProps);
+        if(this.debug) console.log(currentWSProps);
         return returnVal;
     },
     getWSPropsEqual(payload){
@@ -506,14 +538,10 @@ var store = {
         var currentWSProps = this.getCurrentWSProps(payload);
         var keys1, keys2;
         if(wsProps && currentWSProps){
-            console.log('? : ' + wsProps.count + ' = ' + currentWSProps.count)
             keys1 = Object.keys(wsProps);
             keys2 = Object.keys(currentWSProps);
-            console.log(keys1)
-            console.log(keys2)
             if(keys1.length !== keys2.length) returnVal = false;
             keys1.forEach(function(key, index){
-                console.log(wsProps[key] + ' =?= ' + currentWSProps[key])
                 if(wsProps[key] !== currentWSProps[key]) returnVal = false;
             })
             return true;
@@ -522,7 +550,7 @@ var store = {
 /* WEBSERVICE RETURN */
     newWebserviceRequest(payload){
         var areEqual = this.getWSPropsEqual(payload);
-        console.log("wsProps = currentWSProps ? " + areEqual)
+        if(this.state.debug) console.log("wsProps = currentWSProps ? " + areEqual)
         return !(areEqual);
     },
     canShowData(payload){

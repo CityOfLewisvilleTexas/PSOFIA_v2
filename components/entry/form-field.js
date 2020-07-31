@@ -28,6 +28,7 @@ Vue.component('form-field', {
 			<checkbox-field v-if="isCheckbox" :field="field" :highlight-required="highlightRequired"></checkbox-field>
 			<text-field v-if="isText" :field="field" :highlight-required="highlightRequired"></text-field>
 			<email-field v-if="isEmail" :field="field" :highlight-required="highlightRequired"></email-field>
+			<signature-field v-if="isSignature" :field="field" :highlight-required="highlightRequired"></signature-field>
 			<text-area-field v-if="isTextArea" :field="field" :highlight-required="highlightRequired"></text-area-field>
 			<select-field v-if="isSelect" :field="field" :v-set="vSet" :vs-options="vsOptions" :highlight-required="highlightRequired"></select-field>
 			<select-field-category v-if="isCatSelect" :field="field" :v-set="vSet" :vs-options="vsOptions" :highlight-required="highlightRequired"></select-field-category>
@@ -63,6 +64,9 @@ Vue.component('form-field', {
 		},
 		isEmail: function(){
 			return this.field.FieldType == 'EMAIL';
+		},
+		isSignature: function(){
+			return this.field.FieldType == 'SIGNATURE';
 		},
 		isTextArea: function(){
 			return this.field.FieldType == 'TEXTAREA';

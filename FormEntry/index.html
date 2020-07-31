@@ -22,20 +22,17 @@
     <script src="../materialize_v0.100.2/js/materialize.min.js"></script>
 	<!-- moment -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js"></script>
+    <!-- signature pad -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2/dist/signature_pad.min.js"></script>
     <!-- city oauth -->
 	<script>
-		var _topLevelDomain = window.location.host.split(".")[0]
-		var _colSecurityUrl = ""
-		if (_topLevelDomain == "apps"){
-			_colSecurityUrl = "http://apps.cityoflewisville.com/COLSecurity/col_security.js"
-		}else if (_topLevelDomain == "eservices"){
-            _colSecurityUrl = "http://eservices.cityoflewisville.com/COLSecurity/col_security.js"
-        }else{
-			_colSecurityUrl = "https://forms.cityoflewisville.com/oauth/col_security.js"
-		}
-		var _scriptElement = document.createElement('script');
-		_scriptElement.src = _colSecurityUrl
-		document.getElementsByTagName('head')[0].appendChild(_scriptElement);
+		var hostName = window.location.host.split(".")[0]
+        var colSecurityHost = hostName.toLowerCase()
+        if (window.location.protocol == "https:") colSecurityHost = 'forms'
+        var colSecurityUrl = window.location.protocol + '//' + colSecurityHost + '.cityoflewisville.com/COLSecurity/col_security.js';
+        var _scriptElement = document.createElement('script');
+        _scriptElement.src = colSecurityUrl
+        document.getElementsByTagName('head')[0].appendChild(_scriptElement);
 	</script>
     <!--<script src="http://apps.cityoflewisville.com/COLSecurity/col_security.js"></script>-->
     <!-- mobile friendly -->
@@ -52,6 +49,7 @@
 
     <script src="../components/entry/text-field_req.js?4"></script>
     <script src="../components/entry/email-field_req.js?4"></script>
+    <script src="../components/entry/signature-field.js?4"></script>
     <script src="../components/entry/text-area-field_req.js?4"></script>
 
 	<script src="../components/entry/date-field_req.js?4"></script>
