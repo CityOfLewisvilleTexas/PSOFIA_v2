@@ -76,8 +76,8 @@ var Login = {
         //if(this.routeDebug) console.warn('\t\tBefore update');
         if(this.routeDebug) console.warn('\t\tBefore update - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path + (to.query ? ('\nquery: ' + JSON.stringify(to.query)) : '') );
         // clear timeouts
-        if(this.checkTimeout) clearTimeout(checkTimeout)
-        if(this.redirectTimeout) clearTimeout(redirectTimeout)
+        if(this.checkTimeout) clearTimeout(this.checkTimeout)
+        if(this.redirectTimeout) clearTimeout(this.redirectTimeout)
         Vue.nextTick(function(){
             next();
         });
@@ -86,8 +86,8 @@ var Login = {
         //if(this.routeDebug) console.warn('\t\tBefore leave');
         if(this.routeDebug) console.warn('\t\tBefore leave - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path + (to.query ? ('\nquery: ' + JSON.stringify(to.query)) : '') );
         // clear timeouts
-        if(this.checkTimeout) clearTimeout(checkTimeout)
-        if(this.redirectTimeout) clearTimeout(redirectTimeout)
+        if(this.checkTimeout) clearTimeout(this.checkTimeout)
+        if(this.redirectTimeout) clearTimeout(this.redirectTimeout)
         Vue.nextTick(function(){
             next();
         });
