@@ -39,8 +39,8 @@ Vue.component('select-field-category', {
 	`,
 	data: function(){
 		return{
-			inputVal: '',
 			debug: false,
+			inputVal: '',
 		}
 	},
 	watch:{
