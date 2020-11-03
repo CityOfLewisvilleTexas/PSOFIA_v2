@@ -147,7 +147,8 @@ html, body, #app {
     color: #9e9e9e;
 }
 
-.input-field.field-is-required.field-is-blank label, .input-field.field-is-required.field-is-blank .date-label, .signature-field.field-is-required.field-is-blank label {
+.input-field.field-is-required.field-is-blank label, .input-field.field-is-required.field-is-blank .date-label, .signature-field.field-is-required.field-is-blank label,
+.input-field.field-has-error label, .input-field.field-has-error .date-label, .signature-field.field-has-error label {
     color: red;
 }
 

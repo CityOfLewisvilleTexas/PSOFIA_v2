@@ -70,19 +70,22 @@ var Build = {
         </v-row>
     `,
 
-// BUILD
+
     beforeRouteEnter (to, from, next) {
-        console.log("\t\tBUILD - Before enter");
+        if(store.routeDebug) console.log("\t\tBefore enter");
+        //if(store.routeDebug) console.warn('\t\tBefore enter - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path + (to.params ? ('\nparams: ' + JSON.stringify(to.params)) : '') );
         Vue.nextTick(function(){
             next();
         });
     },
     beforeRouteUpdate (to, from, next) {
         var self = this;
-        if(this.routeDebug) console.log('\t\tBUILD - Before update - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path);
+        if(this.routeDebug) console.warn('\t\tBefore update');
+        //if(this.routeDebug) console.log('\t\tBUILD - Before update - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path);
         this.isLoading = true;
+        // clear timeouts
         if(this.wsGetTimeout){
-            if(this.debug) console.log("\t\tBUILD - Need to clear timeout");
+            if(this.debug) console.log("\t\tNeed to clear GET timeout");
             clearTimeout(self.wsGetTimeout);
         }
         Vue.nextTick(function(){
@@ -91,9 +94,12 @@ var Build = {
     },
     beforeRouteLeave (to, from, next) {
         var self = this;
-        if(this.routeDebug) console.log('\t\tBUILD - Before leave - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path);
+        if(this.routeDebug) console.warn('\t\tBefore leave');
+        //if(this.routeDebug) console.log('\t\tBUILD - Before leave - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path);
+        this.isLoading = true;
+        // clear timeouts
         if(this.wsGetTimeout){
-            if(this.debug) console.log("\t\tBUILD - Need to clear timeout");
+            if(this.debug) console.log("\t\tNeed to clear timeout");
             clearTimeout(self.wsGetTimeout);
         }
         Vue.nextTick(function(){
@@ -101,7 +107,7 @@ var Build = {
         });
     },
 
-// BUILD
+
     data: function(){
         return{
             debug: true,
@@ -109,58 +115,56 @@ var Build = {
             isSubmitting: false,
             sharedState: store.state,
 
+            formID: null,
+            valSetID: null,
+
             showInactive: false,
-            //changingRoute: false,
+
+            warningMsg: 'Unknown',
+            errorMsg: 'Unknown Error',
+            hasWarning: false,
+            hasError: false,
+            isRetrying: false,
+
             wsGetTimeout: null,
         }
     },
 
-// BUILD
-    created: function(){
-        if(this.debug) console.log("\t\tBUILD - Created");
-    },
-    mounted: function(){
-        if(this.debug) console.log("\t\tBUILD - Mounted");
-        this.initialize();
-    },
-    beforeDestroy: function() {
-        if(this.debug) console.log("\t\tBUILD - Destroy");
-    },
 
-// BUILD
     watch: {
-        $route(to, from){
-            if(this.routeDebug) console.log('\t\tBUILD - Route changed - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path);
-            //this.routeChanged();
+        '$route': {
+            handler: function(to, from){
+                if(this.routeDebug) console.warn ('\tRoute changed');
+                //if(this.routeDebug) console.warn('\tRoute changed - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path + (to.params ? ('\nparams: ' + JSON.stringify(to.params)) : '') + (to.meta ? ('\nmeta: ' + JSON.stringify(to.meta)) : '') + (to.query ? ('\nquery: ' + JSON.stringify(to.query)) : '') );
+                if(to.path != from.path && (to.name == 'buildForm' || to.name == 'editForm') ){
+                    if(this.routeDebug) console.log('\t\tBUILD - Diff watch - Route changed - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path);
+                    this.routeChanged();
+                }
+            },
+            deep: true,
         },
         '$route.params.formid': {
             immediate: true,
             handler: function(newVal, oldVal) {
                 if(newVal !== undefined){
-                    if(this.routeDebug) console.log('\t\tBUILD - :formid changed - oldVal: ' + oldVal + '; newVal: ' + newVal)
+                    if(this.routeDebug) console.log('\tformid changed - old: ' + oldVal + '; new: ' + newVal)
                 }
             },
             deep: true,
         },
-
-        '$route': {
-            handler(newVal, oldVal){
-                if(newVal.path != oldVal.path && (newVal.name == 'buildForm' || newVal.name == 'editForm') ){
-                    if(this.routeDebug) console.log('\t\tBUILD - Diff watch - Route changed - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path);
-                    this.routeChanged();
-                }
-            },
-            deep: true
-        },
         userLoading: function(newVal, oldVal){
+            if(this.debug) console.warn('\tUser Loading changed')
             if(newVal === false){
-                if(this.debug) console.log("\tBUILD - User Loading changed")
+                if(this.debug) console.warn("\tUser Loading false")
                 this.initialize();
             }
         },
+        userEmail: function(newVal, oldVal){
+            if(this.debug) console.warn('\tUser Email changed')
+            this.initialize();
+        },
     },
 
-// BUILD
     computed: {
         routeName: function(){
             if(this.$route.hasOwnProperty('name') && this.$route.name) return this.$route.name
@@ -196,22 +200,22 @@ var Build = {
         storeLoading: function(){ return this.stateLoading || this.formLoading || this.databaseLoading || this.colsLoading; },
         appLoading: function(){ return this.userLoading || this.storeLoading || this.isLoading; },
 
-        pageTitle: function(){
-            if(this.formIDparam) return 'Edit Form ' + this.formIDparam.toString()
-            else return 'Create New Form'
-        },
-        /*showFAB: function(){
-            return (!(this.appLoading) || !(this.changingRoute));
-        },*/
-
-        payload: function(){
+        routePayload: function(){
             return {stateName: 'form', keepInactive: this.showInactive}
         },
-        formDataPayload: function(){
-            return Object.assign({}, this.payload, {storeName: 'formData'});
+        storeHasData: function(){
+            return store.canShowData(this.routePayload);
         },
-        secPayload: function(){
-            return Object.assign({}, this.payload, {storeName: 'formSections'});
+        newWSRequest: function(){
+            return store.newWebserviceRequest(this.routePayload);
+            else return false;
+        },
+
+        formDataPayload: function(){
+            return Object.assign({}, this.routePayload, {storeName: 'formData'});
+        },
+        fSectionsPayload: function(){
+            return Object.assign({}, this.routePayload, {storeName: 'formSections'});
         },
 
 
@@ -220,12 +224,12 @@ var Build = {
             else return null;
         },
         formSections: function(){
-            if(!this.appLoading) return store.getArrDataObjs(this.secPayload);
+            if(!this.appLoading) return store.getArrDataObjs(this.fSectionsPayload);
             else return [];
         },
 
         secOrderIdPropname: function(){
-            return this.getStoreOrderID(secPayload);
+            return this.getStoreOrderID(fSectionsPayload);
         },
 
         /*filteredFormSections: function(){
@@ -239,7 +243,7 @@ var Build = {
         },*/
         orderedSections: function(){
             if(this.formSections && this.formSections.length > 0){
-                var orderPayload = Object.assign({}, this.secPayload, {arrDataObjs: this.formSections});
+                var orderPayload = Object.assign({}, this.fSectionsPayload, {arrDataObjs: this.formSections});
                 return store.orderArrDataObjs(orderPayload);
             }
         },
@@ -253,6 +257,32 @@ var Build = {
         status: function(){
             if(this.unsavedChanges) return 'Unsaved Changes';
             return 'Saved to DB';
+        },
+
+        pageTitle: function(){
+            var title = 'Loading...';
+            if(!this.isLoading){
+                if(this.formID) title = 'Edit Form ' + this.formID;
+                else if(this.formIDparam) title = 'Edit Form ' + this.formIDparam
+                else title = 'Create New Form'
+            }
+            return title;
+        },
+        /*showFAB: function(){
+            return (!(this.appLoading) || !(this.changingRoute));
+        },*/
+
+        primaryDateField: function(){
+            if(this.formFields){
+                return this.formFields.find(function(field){
+                    return field.PrimaryDateField.val == 1;
+                });
+            }
+            else return null;
+        },
+
+        allForms: function(){
+            if(this.storeHasData) return store.getDataObj({stateName: 'datatables', storeName: 'formsList'});
         },
 
         createDate: function(){
@@ -269,29 +299,53 @@ var Build = {
         },
     },
 
-// BUILD
+
+    created: function(){
+        if(this.debug) console.warn("\t\tCreated");
+    },
+    mounted: function(){
+        if(this.debug) console.warn("\t\tMounted");
+        var self = this;
+
+        if(!this.userLoading){
+/* UNNECESSARY NEXT TICK ? */
+            self.initialize();
+        }
+        else if(this.debug) console.warn('User loading, will init on user email change')
+    },
+    beforeDestroy: function() {
+        if(this.debug) console.warn("\t\tDestroy");
+        // clear timeout
+        if(this.wsGetTimeout){
+            if(this.debug) console.warn('need to clear GET timeout');
+            clearTimeout(self.wsGetTimeout);
+        }
+    },
+
+
     methods: {
         routeChanged: function(){
-            if(this.debug) console.log("\tBUILD - Route Changed")
-            this.isLoading = true;
+            if(this.debug) console.log("\trouteChanged")
             this.initialize();
         },
         initialize: function(){
             var self = this;
-            //if(this.debug) console.log('\tLIST - initialize - routeName: ' + this.routeName + '; formIDparam: ' + this.formIDparam + '; deptIDparam: ' + this.deptIDparam)
+            this.isLoading = true;
 
+/* UNNECESSARY NEXT TICK ? */
             Vue.nextTick(function(){
-                if(self.debug) console.log('\tLIST - initialize nextTick - routeName: ' + self.routeName + '; formIDparam: ' + self.formIDparam + '; deptIDparam: ' + self.deptIDparam)
-                //if(self.isDev) self.getFormBuilder();
-                //else self.isLoading = false;
+                if(self.debug) console.log('\tLIST - initialize nextTick - routeName: ' + self.routeName + '; formIDparam: ' + self.formIDparam)
+                if(self.isDev) self.getFormBuilder();
+                else self.isLoading = false;
                 
             });
         },
         getFormBuilder: function(){
+            if(this.debug) console.log('\tgetFormBuilder')
             var self = this;
 
             if(this.hasInternet){
-                this.isLoading = true;
+                //this.isLoading = true;
                 store.setStoreIsLoading({isLoading: true});
 
                 var checktime = moment();
@@ -323,7 +377,7 @@ var Build = {
 
                         // if new form, insert default row for form data
                         if(!(self.formIDparam)){
-                            //store.setupNewForm();
+                            store.setupNewForm();
                         }
 
                         Vue.nextTick(function(){
@@ -333,11 +387,13 @@ var Build = {
                     });
                 })
                 .fail(function(data){
+                    var loadDate = moment();
                     store.setConnectionsOnWSFail(data, checktime);
                     console.error("Webservice fail: Get Form Builder2");
                     if(self.debug) console.log(data);
 
                     Vue.nextTick(function(){
+                        self.isRetrying = true;
                         if(!self.hasInternet) self.wsGetTimeout = setTimeout(self.getFormBuilder, 1000);
                         else self.wsGetTimeout = setTimeout(self.getFormBuilder, 5000);
                     });
@@ -345,12 +401,13 @@ var Build = {
             }
             else{
                 console.error('OFFLINE')
+                self.isRetrying = true;
                 self.wsGetTimeout = setTimeout(self.getFormBuilder, 5000);
             }
         },
 
         addNewSection: function(){
-            store.addDataObj(this.secPayload);
+            store.addDataObj(this.fSectionsPayload);
         },
 
         getTooltip: function(colName){

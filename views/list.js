@@ -191,7 +191,7 @@ var List = {
         </v-row>
     `,
 
-// LIST
+
     beforeRouteEnter (to, from, next) {
         if(store.routeDebug) console.warn('\t\tBefore enter');
         //if(store.routeDebug) console.warn('\t\tBefore enter - ' + to.matched.length + ' matched; name: ' + to.name + '; path: ' + to.path + (to.params ? ('\nparams: ' + JSON.stringify(to.params)) : '') );
@@ -232,7 +232,7 @@ var List = {
         });
     },
 
-// LIST
+
     data: function(){
         return{
             debug: false,
@@ -279,7 +279,7 @@ var List = {
         }
     },
 
-// LIST
+
     watch: {
         '$route': {
             handler: function(to, from){
@@ -322,7 +322,7 @@ var List = {
         },
     },
 
-// LIST
+
     computed: {
         routeName: function(){
             if(this.$route.hasOwnProperty('name') && this.$route.name) return this.$route.name
@@ -578,7 +578,7 @@ var List = {
                     if(this.storeHasData && this.formData) title = this.formData.FormName.displayVal;
                     else if(this.formID) title = 'Form ' + this.formID;
                     else if(this.formIDparam) title = 'Form ' + this.formIDparam
-                    else 'UNKNOWN'
+                    else title =  'UNKNOWN'
                 }
                 else if(this.storeName == 'formsList'){
                     title = 'All Forms';
@@ -658,7 +658,7 @@ var List = {
         },
     },
 
-// LIST
+
     created: function(){
         if(this.debug) console.warn('\t\tCreated');
     },
@@ -688,7 +688,7 @@ var List = {
         }
     },
 
-// LIST
+
     methods: {
         routeChanged: function(){
             if(this.debug) console.log('\trouteChanged');
@@ -833,7 +833,6 @@ var List = {
             if(this.debug) console.log('\tgetForms')
             var self = this;
             this.saveTableSettings();
-
             if(this.hasInternet){
                 //this.isLoading = true;
                 store.setStoreIsLoading({isLoading: true});

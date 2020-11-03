@@ -47,11 +47,15 @@ Vue.component('text-area-field', {
 		fieldRequired: function(){
 			return this.field.Required;
 		},
+		fieldLenError: function(){
+			return this.fieldVal && this.fieldVal.length > 4000;
+		},
 		classObject: function () {
 			return {
 				'field-is-blank': this.fieldVal === '',
 				'field-is-required': this.fieldRequired,
 				'field-show-required': this.highlightRequired && this.fieldRequired && this.fieldVal === '',
+				'field-has-error': this.fieldLenError,
 				'long-label': this.field.FieldName.length > 90
 			}
 		},
