@@ -25,8 +25,8 @@ Vue.component('form-sub-section', {
 	},
 	template: `
 		<span>
-			<div v-if="!(subSection.HideSectionTitle) || subSection.SubSectionDesc" class="col s12 l10 offset-l1">
-				<h5 v-if="!(subSection.HideSectionTitle)">{{subSection.SubSectionTitle}}</h5>
+			<div v-if="!(subSection.HideSubSectionTitle) || subSection.SubSectionDesc" class="col s12 l10 offset-l1">
+				<h5 v-if="!(subSection.HideSubSectionTitle)">{{subSection.SubSectionTitle}}</h5>
 				<p v-if="subSection.SubSectionDesc" v-html="subSection.SubSectionDesc" style="white-space: pre-wrap;"></p>
 			</div>
 			<form-field v-for="f in getOrderedFields" :key="f.FormFieldID" :field="f" :v-set="getFieldVSet(f)" :vs-options="getFieldVSOptions(f)" :highlight-required="highlightRequired"></form-field>
