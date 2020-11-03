@@ -28,7 +28,7 @@ Vue.component('time-field', {
 	data: function(){
 		return{
 			inputVal: '',
-			debug: false,
+			debug: true,
 		}
 	},
 	watch:{
@@ -53,14 +53,14 @@ Vue.component('time-field', {
 		},
 		classObject: function () {
 			return {
-				'field-is-blank': this.fieldVal === '',
+				'field-is-blank': this.fieldValFormat === '',
 				'field-is-required': this.fieldRequired,
-				'field-show-required': this.highlightRequired && this.fieldRequired && this.fieldVal === '',
+				'field-show-required': this.highlightRequired && this.fieldRequired && this.fieldValFormat === '',
 			}
 		},
 		labelClassObject: function(){
 			return {
-				'active': this.fieldVal !== '',
+				'active': this.fieldValFormat !== '',
 			}
 		},
 	},
@@ -97,12 +97,12 @@ Vue.component('time-field', {
 		})
 
 		//this.refreshInput();
-		Vue.nextTick(function(){
+		//Vue.nextTick(function(){
 			if(vm.fieldVal){
 				if(vm.debug) console.log('Initial Value: ' + vm.field.FieldHTMLID + ' = ' + vm.getValText(vm.fieldVal));
 				vm.refreshInput();
 			}
-		})
+		//})
 
 		//this.inputVal = this.fieldValFormat;
 		//$input.pickadate(vm.fieldValFormat)

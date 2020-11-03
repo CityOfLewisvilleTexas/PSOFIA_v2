@@ -89,12 +89,12 @@ Vue.component('select-field', {
 		});
 
 		//console.log(s.material_select());
-		Vue.nextTick(function(){
+		//Vue.nextTick(function(){
 			if(vm.fieldVal){
 				if(vm.debug) console.log('Initial Value: ' + vm.field.FieldHTMLID + ' = ' + vm.getValText(vm.fieldVal));
 				vm.refreshInput();
 			}
-		});
+		//});
 	},
 	methods:{
 		updateValue:function(value){
